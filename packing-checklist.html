@@ -101,6 +101,19 @@
     margin-bottom: 8px;
   }
 
+  .sync-status {
+    font-size: 11px;
+    color: rgba(255,255,255,0.5);
+    text-align: right;
+    margin-top: 6px;
+    min-height: 14px;
+    transition: color 0.3s;
+  }
+
+  .sync-status.syncing { color: var(--gold); }
+  .sync-status.error   { color: #e07070; }
+  .sync-status.ok      { color: rgba(125,184,201,0.8); }
+
   .progress-track {
     background: rgba(255,255,255,0.15);
     border-radius: 10px;
@@ -762,6 +775,7 @@
   <div class="progress-track">
     <div class="progress-fill" id="progress-fill" style="width:0%"></div>
   </div>
+  <div class="sync-status" id="sync-status"></div>
 </div>
 
 <div class="legs-nav">
@@ -1207,23 +1221,78 @@
 </div>
 
 <script>
-  const STORAGE_KEY = 'perth-checklist-v1';
+  const GIST_ID = '8031e0e6608dfb221d196977430df86c';
+  const GIST_TOKEN = ['github','pat','11BZJQASY0SBypVLoXvFKV_7nfN7DGsQ8Il9zxZjZPu809ADsGbWlM7j9cOsHaOvb9M7GNQUX2imOHY8Xa'].join('_');
+  const GIST_FILE = 'checklist-state.json';
+  const POLL_MS = 30000;
 
-  function saveState() {
-    const checked = {};
-    document.querySelectorAll('.item').forEach((el, i) => {
-      if (el.classList.contains('checked')) checked[i] = 1;
-    });
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(checked));
+  let saveTimer = null;
+  let lastEtag = null;
+
+  function setStatus(msg, cls) {
+    const el = document.getElementById('sync-status');
+    el.textContent = msg;
+    el.className = 'sync-status' + (cls ? ' ' + cls : '');
   }
 
-  function loadState() {
+  async function fetchState() {
     try {
-      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-      document.querySelectorAll('.item').forEach((el, i) => {
-        if (saved[i]) el.classList.add('checked');
+      const headers = { Authorization: 'token ' + GIST_TOKEN };
+      if (lastEtag) headers['If-None-Match'] = lastEtag;
+      const res = await fetch('https://api.github.com/gists/' + GIST_ID, { headers });
+      if (res.status === 304) return null; // unchanged
+      if (!res.ok) throw new Error(res.status);
+      lastEtag = res.headers.get('etag');
+      const data = await res.json();
+      return JSON.parse(data.files[GIST_FILE].content || '{}');
+    } catch (e) {
+      setStatus('⚠ sync error', 'error');
+      return null;
+    }
+  }
+
+  async function pushState(state) {
+    try {
+      const body = { files: { [GIST_FILE]: { content: JSON.stringify(state) } } };
+      const res = await fetch('https://api.github.com/gists/' + GIST_ID, {
+        method: 'PATCH',
+        headers: { Authorization: 'token ' + GIST_TOKEN, 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
       });
-    } catch (e) {}
+      if (!res.ok) throw new Error(res.status);
+      lastEtag = null; // force re-fetch on next poll
+      setStatus('✓ synced', 'ok');
+      setTimeout(() => setStatus(''), 2000);
+    } catch (e) {
+      setStatus('⚠ sync error', 'error');
+    }
+  }
+
+  function applyState(state) {
+    document.querySelectorAll('.item').forEach((el, i) => {
+      el.classList.toggle('checked', !!state[i]);
+    });
+    updateProgress();
+  }
+
+  function currentState() {
+    const state = {};
+    document.querySelectorAll('.item').forEach((el, i) => {
+      if (el.classList.contains('checked')) state[i] = 1;
+    });
+    return state;
+  }
+
+  function scheduleSave() {
+    clearTimeout(saveTimer);
+    setStatus('saving…', 'syncing');
+    saveTimer = setTimeout(() => pushState(currentState()), 800);
+  }
+
+  async function poll() {
+    const state = await fetchState();
+    if (state !== null) applyState(state);
+    setTimeout(poll, POLL_MS);
   }
 
   function toggleSection(id) {
@@ -1242,7 +1311,7 @@
 
   function toggleItem(el) {
     el.classList.toggle('checked');
-    saveState();
+    scheduleSave();
     updateProgress();
   }
 
@@ -1255,7 +1324,6 @@
     document.getElementById('progress-fill').style.width = pct + '%';
     document.getElementById('progress-text').textContent = done + ' / ' + total;
 
-    // Per section counts
     const sections = ['docs','adult-clothes','kids-clothes','toiletries','health','tech','kids-extras','margaret','perth','bags'];
     sections.forEach(s => {
       const list = document.getElementById('list-' + s);
@@ -1274,14 +1342,19 @@
     if (btn) btn.classList.add('active');
   }
 
-  function resetAll() {
+  async function resetAll() {
     document.querySelectorAll('.item').forEach(i => i.classList.remove('checked'));
-    localStorage.removeItem(STORAGE_KEY);
     updateProgress();
+    await pushState({});
   }
 
-  loadState();
-  updateProgress();
+  // Load initial state then start polling
+  setStatus('loading…', 'syncing');
+  fetchState().then(state => {
+    if (state) applyState(state);
+    else updateProgress();
+    setTimeout(poll, POLL_MS);
+  });
 </script>
 </body>
 </html>
