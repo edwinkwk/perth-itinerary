@@ -1309,6 +1309,7 @@
   let saveTimer = null;
   let lastEtag = null;
   let baseItemKeys = [];
+  let baseItemSnapshots = []; // {key, sectionId, html}
 
   // ── Init ──────────────────────────────────────────────────────────────────
 
@@ -1319,6 +1320,8 @@
       el.dataset.key = key;
       baseItemKeys.push(key);
       el.appendChild(makeDeleteBtn(el));
+      const sectionId = el.closest('.items-list')?.id.replace('list-', '');
+      baseItemSnapshots.push({ key, sectionId, html: el.outerHTML });
     });
 
     // Inject "Add item" rows into each section
@@ -1345,7 +1348,11 @@
     btn.className = 'item-delete';
     btn.title = 'Remove item';
     btn.textContent = '×';
-    btn.onclick = e => { e.stopPropagation(); deleteItem(itemEl); };
+    btn.onclick = e => {
+      e.stopPropagation();
+      if (!confirm('Remove this item?')) return;
+      deleteItem(itemEl);
+    };
     return btn;
   }
 
@@ -1555,10 +1562,37 @@
   }
 
   async function resetAll() {
-    if (!confirm('Reset all items? This will clear the checklist for everyone.')) return;
-    document.querySelectorAll('.item').forEach(i => i.classList.remove('checked'));
+    if (!confirm('Reset all items? This will restore deleted items, remove added items, and uncheck everything for everyone.')) return;
+
+    // Remove all current items from every section
+    SECTIONS.forEach(s => {
+      const list = document.getElementById('list-' + s);
+      if (!list) return;
+      list.querySelectorAll('.item').forEach(el => el.remove());
+    });
+
+    // Re-insert base items from snapshots and re-attach delete buttons
+    baseItemSnapshots.forEach(({ sectionId, html }) => {
+      const list = document.getElementById('list-' + sectionId);
+      if (!list) return;
+      const tmp = document.createElement('div');
+      tmp.innerHTML = html;
+      const el = tmp.firstElementChild;
+      el.classList.remove('checked');
+      // Re-wire onclick and delete button (outerHTML loses event listeners)
+      el.onclick = () => toggleItem(el);
+      const delBtn = el.querySelector('.item-delete');
+      if (delBtn) delBtn.onclick = e => {
+        e.stopPropagation();
+        if (!confirm('Remove this item?')) return;
+        deleteItem(el);
+      };
+      const addRow = document.getElementById('add-row-' + sectionId);
+      list.insertBefore(el, addRow);
+    });
+
     updateProgress();
-    await pushState(currentState());
+    await pushState({ checked: {}, removed: [], custom: [] });
   }
 
   // ── Boot ──────────────────────────────────────────────────────────────────
