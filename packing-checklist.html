@@ -1207,6 +1207,25 @@
 </div>
 
 <script>
+  const STORAGE_KEY = 'perth-checklist-v1';
+
+  function saveState() {
+    const checked = {};
+    document.querySelectorAll('.item').forEach((el, i) => {
+      if (el.classList.contains('checked')) checked[i] = 1;
+    });
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(checked));
+  }
+
+  function loadState() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+      document.querySelectorAll('.item').forEach((el, i) => {
+        if (saved[i]) el.classList.add('checked');
+      });
+    } catch (e) {}
+  }
+
   function toggleSection(id) {
     const list = document.getElementById('list-' + id);
     const chev = document.getElementById('chev-' + id);
@@ -1223,6 +1242,7 @@
 
   function toggleItem(el) {
     el.classList.toggle('checked');
+    saveState();
     updateProgress();
   }
 
@@ -1256,9 +1276,11 @@
 
   function resetAll() {
     document.querySelectorAll('.item').forEach(i => i.classList.remove('checked'));
+    localStorage.removeItem(STORAGE_KEY);
     updateProgress();
   }
 
+  loadState();
   updateProgress();
 </script>
 </body>
