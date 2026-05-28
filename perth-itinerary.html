@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Perth & Margaret River — Edwin & Family · Jun 2–11, 2026</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0a0f0a; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0d1420; }
+    ::-webkit-scrollbar-thumb { background: #2a3a50; border-radius: 3px; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState } = React;
+
+    const trip = {
+      title: "Perth & Margaret River",
+      subtitle: "Jun 2 – 11, 2026  ·  Edwin & Family",
+      days: [
+        {
+          date: "Tue, Jun 2", label: "DAY 1",
+          location: "Singapore → Perth → Margaret River",
+          phase: "margaret", weatherIcon: "🌤", high: 17, low: 11, rain: "Low",
+          events: [
+            { time: "00:10", icon: "✈", text: "Depart SIN on SQ225 (Boeing 787)", ref: "FA7YQZ" },
+            { time: "05:10", icon: "🛬", text: "Land at Perth Intl (Terminal 1)" },
+            { time: "07:00", icon: "🚗", text: "Pick up 7-seat SUV at No Birds Kewdale", ref: "9B477M" },
+            { time: "09:30", icon: "🥕", text: "Pitstop — The Crooked Carrot, Myalup", cal: true },
+            { time: "13:30", icon: "🍷", text: "Lunch – Swings & Roundabouts, Yallingup (9 pax)", ref: "26198277", cal: true },
+            { time: "16:30", icon: "🏡", text: "Check in – Margaret River Holiday Cottages", ref: "SWLE4P", cal: true },
+          ],
+          tip: "Brick + Timber cottages at 185 Boodjidup Rd • 6 adults, 3 children • AUD 4,014 • Note: Swings & Roundabouts lunch (1:30pm) is en route — check-in at cottages 4:30pm",
+        },
+        {
+          date: "Wed, Jun 3", label: "DAY 2", location: "Margaret River",
+          phase: "margaret", weatherIcon: "🌤", high: 17, low: 11, rain: "Low",
+          events: [
+            { time: "All day", icon: "🍷", text: "Wine trail – Vasse Felix, Cullen Wines, Cape Mentelle" },
+            { time: "Lunch", icon: "🍽", text: "Settle in & explore township cafés" },
+            { time: "Sunset", icon: "🌊", text: "Surfers Point lookout & Prevelly Beach" },
+          ],
+          tip: "Cool 17°C days — layer up for evenings by the firepit!",
+        },
+        {
+          date: "Thu, Jun 4", label: "DAY 3", location: "Margaret River",
+          phase: "margaret", weatherIcon: "☁", high: 18, low: 11, rain: "Medium",
+          events: [
+            { time: "Morning", icon: "🌲", text: "Boranup Forest & Hamelin Bay drive" },
+            { time: "Afternoon", icon: "🦅", text: "Cape Leeuwin Lighthouse (two-ocean meeting point)" },
+            { time: "Evening", icon: "🔥", text: "BBQ at cottage & stargazing" },
+          ],
+          tip: "Highest chance of rain this stretch — pack ponchos",
+        },
+        {
+          date: "Fri, Jun 5", label: "DAY 4", location: "Margaret River",
+          phase: "margaret", weatherIcon: "🌦", high: 17, low: 14, rain: "Medium",
+          events: [
+            { time: "Morning", icon: "🧀", text: "Farmhouse & artisan produce market" },
+            { time: "Afternoon", icon: "🍫", text: "Chocolate factory & craft beer trail" },
+            { time: "Evening", icon: "🌙", text: "Last night at the cottages — pack up for morning" },
+          ],
+          tip: "Reception open 09:00–17:00  ·  📞 +61 8 9757 2185",
+        },
+        {
+          date: "Sat, Jun 6", label: "DAY 5",
+          location: "Margaret River → Perth (Willetton)",
+          phase: "transit", weatherIcon: "⛅", high: 16, low: 14, rain: "Low",
+          events: [
+            { time: "10:00", icon: "🏡", text: "Check out Margaret River Cottages (by 10am)" },
+            { time: "~13:00", icon: "🚗", text: "3-hr drive north to Perth" },
+            { time: "14:00", icon: "🏠", text: "Check in – Private Green Oasis, Willetton", ref: "HMK9A5JFFD" },
+          ],
+          tip: "8 The Taffrail, Willetton WA 6155 • Host: Raj & Rav • +61 488 111 762 • SGD 1,641",
+        },
+        {
+          date: "Sun, Jun 7", label: "DAY 6", location: "Perth",
+          phase: "perth", weatherIcon: "⛅", high: 17, low: 14, rain: "Low",
+          events: [
+            { time: "Morning", icon: "🌉", text: "Kings Park & Botanic Garden – city panorama" },
+            { time: "Afternoon", icon: "🐬", text: "Cottesloe Beach stroll & Fremantle Market" },
+            { time: "Evening", icon: "🍣", text: "Dinner in Fremantle waterfront" },
+          ],
+          tip: "Perth is WA's sunniest winter city — mild & crisp",
+        },
+        {
+          date: "Mon, Jun 8", label: "DAY 7", location: "Perth",
+          phase: "perth", weatherIcon: "🌤", high: 18, low: 15, rain: "Low",
+          events: [
+            { time: "Morning", icon: "🦁", text: "Perth Zoo (kids favourite!)" },
+            { time: "Afternoon", icon: "🛍", text: "Claremont Quarter or Karrinyup shopping" },
+            { time: "Evening", icon: "🌆", text: "Sunset along the Swan River" },
+          ],
+          tip: "Lovely mild day — great for outdoors with the kids",
+        },
+        {
+          date: "Tue, Jun 9", label: "DAY 8", location: "Perth",
+          phase: "perth", weatherIcon: "☀", high: 20, low: 19, rain: "Low",
+          events: [
+            { time: "Morning", icon: "🐧", text: "Penguin Island Ferry & sea life tour" },
+            { time: "Afternoon", icon: "🏖", text: "Rockingham beach or Shoalwater Bay" },
+            { time: "Evening", icon: "🥂", text: "Rooftop dinner in the CBD" },
+          ],
+          tip: "Warmest day of the trip at 20°C — make the most of it!",
+        },
+        {
+          date: "Wed, Jun 10", label: "DAY 9", location: "Perth",
+          phase: "perth", weatherIcon: "🌤", high: 20, low: 14, rain: "Low",
+          events: [
+            { time: "Morning", icon: "🏛", text: "Perth Cultural Centre & WA Museum" },
+            { time: "Afternoon", icon: "☕", text: "Northbridge laneways & specialty coffee" },
+            { time: "Evening", icon: "🛄", text: "Pack up & farewell dinner" },
+          ],
+          tip: "Last full day — savour it!",
+        },
+        {
+          date: "Thu, Jun 11", label: "DAY 10", location: "Perth → Singapore",
+          phase: "homebound", weatherIcon: "🌤", high: 17, low: 11, rain: "Low",
+          events: [
+            { time: "11:00", icon: "🏠", text: "Check out Willetton Airbnb (by 11am)" },
+            { time: "14:30", icon: "🚗", text: "Return 7-seat SUV at No Birds Kewdale" },
+            { time: "~15:00", icon: "🚌", text: "Shuttle from Kewdale → Perth Airport" },
+            { time: "16:55", icon: "✈", text: "Depart PER on SQ214 (A350-900)", ref: "FA7YQZ" },
+            { time: "22:10", icon: "🏠", text: "Arrive Singapore Changi" },
+          ],
+          tip: "Return SQ214 • Economy • Terminal 1 → Singapore T3",
+        },
+      ],
+    };
+
+    const phaseColors = {
+      margaret: { bg: "#2d4a2d", accent: "#7bbf6a", badge: "#4a7a4a", text: "#c8e6c8" },
+      transit:  { bg: "#3a3a1a", accent: "#d4c44a", badge: "#5a5a2a", text: "#f0e88c" },
+      perth:    { bg: "#1a2d4a", accent: "#5a9fd4", badge: "#2a4a6a", text: "#b8d8f0" },
+      homebound:{ bg: "#2d1a3a", accent: "#c46ad4", badge: "#4a2a5a", text: "#e8b8f0" },
+    };
+
+    const phaseLabel = {
+      margaret: "🌿 Margaret River",
+      transit: "🚗 Transit Day",
+      perth: "🌆 Perth City",
+      homebound: "✈ Homebound",
+    };
+
+    const weatherCondition = (icon) => {
+      if (icon === "☀") return "Clear";
+      if (icon === "🌤") return "Mostly Sunny";
+      if (icon === "⛅") return "Partly Cloudy";
+      if (icon === "☁") return "Overcast";
+      if (icon === "🌦") return "Light Rain";
+      return "Mixed";
+    };
+
+    function App() {
+      const [selected, setSelected] = useState(null);
+
+      return (
+        <div style={{
+          fontFamily: "'Georgia', 'Times New Roman', serif",
+          background: "linear-gradient(135deg, #0a0f0a 0%, #0d1520 50%, #0a0a14 100%)",
+          minHeight: "100vh",
+          padding: "32px 16px",
+          color: "#e8e4d8",
+        }}>
+          {/* Header */}
+          <div style={{ textAlign: "center", marginBottom: 40 }}>
+            <div style={{
+              display: "inline-block",
+              background: "linear-gradient(90deg, #7bbf6a, #5a9fd4, #c46ad4)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              fontSize: 13,
+              letterSpacing: 6,
+              fontFamily: "sans-serif",
+              fontWeight: 700,
+              textTransform: "uppercase",
+              marginBottom: 8,
+            }}>✦ Western Australia ✦</div>
+            <h1 style={{
+              fontSize: "clamp(28px, 5vw, 52px)",
+              fontWeight: 900,
+              margin: "0 0 6px",
+              color: "#f5f0e8",
+              letterSpacing: -1,
+              lineHeight: 1.1,
+            }}>{trip.title}</h1>
+            <div style={{ fontSize: 15, color: "#8a9ab0", letterSpacing: 2, fontFamily: "sans-serif" }}>
+              {trip.subtitle}
+            </div>
+            {/* Legend */}
+            <div style={{ display: "flex", gap: 12, justifyContent: "center", marginTop: 20, flexWrap: "wrap" }}>
+              {Object.entries(phaseColors).map(([key, c]) => (
+                <span key={key} style={{
+                  background: c.badge, color: c.text, fontSize: 11,
+                  padding: "4px 10px", borderRadius: 20, letterSpacing: 1,
+                  fontFamily: "sans-serif", border: `1px solid ${c.accent}55`,
+                }}>{phaseLabel[key]}</span>
+              ))}
+            </div>
+            {/* Booking refs */}
+            <div style={{ marginTop: 16, display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap" }}>
+              {[
+                { label: "SQ Flight", ref: "FA7YQZ", icon: "✈" },
+                { label: "Car Rental", ref: "9B477M", icon: "🚗" },
+                { label: "Cottages", ref: "SWLE4P", icon: "🏡" },
+                { label: "Airbnb Perth", ref: "HMK9A5JFFD", icon: "🏠" },
+              ].map(b => (
+                <div key={b.ref} style={{
+                  background: "#1a2230", border: "1px solid #2a3a50", borderRadius: 8,
+                  padding: "5px 12px", fontSize: 11, fontFamily: "monospace",
+                  color: "#7ab0d4", display: "flex", gap: 6, alignItems: "center",
+                }}>
+                  <span>{b.icon}</span>
+                  <span style={{ color: "#8a9ab0" }}>{b.label}:</span>
+                  <strong>{b.ref}</strong>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Days Grid */}
+          <div style={{
+            maxWidth: 960, margin: "0 auto",
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+            gap: 16,
+          }}>
+            {trip.days.map((day, i) => {
+              const c = phaseColors[day.phase];
+              const isOpen = selected === i;
+              return (
+                <div key={i} onClick={() => setSelected(isOpen ? null : i)} style={{
+                  background: `linear-gradient(145deg, ${c.bg} 0%, #0d1420 100%)`,
+                  border: `1px solid ${isOpen ? c.accent : c.badge + "88"}`,
+                  borderRadius: 16, padding: "18px 20px", cursor: "pointer",
+                  transition: "all 0.25s ease",
+                  boxShadow: isOpen ? `0 0 20px ${c.accent}44, 0 4px 24px rgba(0,0,0,0.5)` : "0 2px 12px rgba(0,0,0,0.4)",
+                  transform: isOpen ? "scale(1.02)" : "scale(1)",
+                  position: "relative", overflow: "hidden",
+                }}>
+                  {/* Glow bar */}
+                  <div style={{
+                    position: "absolute", top: 0, left: 0, right: 0, height: 3,
+                    background: `linear-gradient(90deg, transparent, ${c.accent}, transparent)`,
+                    opacity: isOpen ? 1 : 0.4,
+                  }} />
+
+                  {/* Day header */}
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
+                    <div>
+                      <div style={{ fontSize: 11, fontFamily: "sans-serif", letterSpacing: 3, color: c.accent, fontWeight: 700, textTransform: "uppercase", marginBottom: 2 }}>
+                        {day.label}
+                      </div>
+                      <div style={{ fontSize: 15, fontWeight: 700, color: "#f0ece0", lineHeight: 1.2 }}>{day.date}</div>
+                      <div style={{ fontSize: 11, color: "#7a8898", fontFamily: "sans-serif", marginTop: 3 }}>{day.location}</div>
+                    </div>
+                    {/* Weather badge */}
+                    <div style={{ background: "#0d1a28", border: `1px solid ${c.badge}`, borderRadius: 12, padding: "6px 10px", textAlign: "center", minWidth: 64 }}>
+                      <div style={{ fontSize: 20, lineHeight: 1 }}>{day.weatherIcon}</div>
+                      <div style={{ fontSize: 11, color: c.text, fontFamily: "sans-serif", marginTop: 3 }}>{day.high}° / {day.low}°</div>
+                      <div style={{ fontSize: 9, color: "#6a7a8a", fontFamily: "sans-serif" }}>{weatherCondition(day.weatherIcon)}</div>
+                    </div>
+                  </div>
+
+                  {/* Events */}
+                  <div style={{ marginBottom: 10 }}>
+                    {(isOpen ? day.events : day.events.slice(0, 2)).map((ev, j) => (
+                      <div key={j} style={{
+                        display: "flex", gap: 8, alignItems: "flex-start", marginBottom: 7,
+                        opacity: j === 1 && !isOpen && day.events.length > 2 ? 0.6 : 1,
+                      }}>
+                        <span style={{ fontSize: 15, flexShrink: 0, lineHeight: 1.4 }}>{ev.icon}</span>
+                        <div>
+                          <span style={{ fontSize: 10, color: c.accent, fontFamily: "monospace", marginRight: 4 }}>{ev.time}</span>
+                          <span style={{ fontSize: 12, color: "#ccc8c0", fontFamily: "sans-serif", lineHeight: 1.4 }}>{ev.text}</span>
+                          {ev.ref && <span style={{ fontSize: 10, color: "#5a7090", fontFamily: "monospace", marginLeft: 4 }}>[{ev.ref}]</span>}
+                          {ev.cal && <span style={{ fontSize: 9, background: "#1e3a5f", color: "#5a9fd4", border: "1px solid #2a5080", borderRadius: 4, padding: "1px 5px", marginLeft: 5, fontFamily: "sans-serif", letterSpacing: 0.5, verticalAlign: "middle" }}>📅 cal</span>}
+                        </div>
+                      </div>
+                    ))}
+                    {!isOpen && day.events.length > 2 && (
+                      <div style={{ fontSize: 11, color: c.accent, fontFamily: "sans-serif", marginTop: 4, letterSpacing: 1 }}>
+                        +{day.events.length - 2} more ›
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Tip */}
+                  {isOpen && (
+                    <div style={{ marginTop: 12, padding: "8px 12px", background: `${c.badge}55`, borderLeft: `3px solid ${c.accent}`, borderRadius: "0 8px 8px 0", fontSize: 11, color: c.text, fontFamily: "sans-serif", lineHeight: 1.5 }}>
+                      {day.tip}
+                    </div>
+                  )}
+
+                  {/* Rain indicator */}
+                  <div style={{ display: "flex", gap: 4, alignItems: "center", marginTop: 10 }}>
+                    <span style={{ fontSize: 10, color: "#5a6878", fontFamily: "sans-serif" }}>Rain:</span>
+                    {["Low", "Medium", "High"].map(r => (
+                      <div key={r} style={{ width: 18, height: 4, borderRadius: 2, background: day.rain === r ? (r === "Low" ? "#4a9a4a" : r === "Medium" ? "#d4a04a" : "#9a2a2a") : "#1a2a3a" }} />
+                    ))}
+                    <span style={{ fontSize: 10, color: "#8a9ab0", fontFamily: "sans-serif" }}>{day.rain}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Weather strip */}
+          <div style={{ maxWidth: 960, margin: "32px auto 0" }}>
+            <div style={{ background: "#0d1420", border: "1px solid #1a2a40", borderRadius: 16, padding: "20px 24px", overflow: "hidden" }}>
+              <div style={{ fontSize: 11, letterSpacing: 4, color: "#4a6080", fontFamily: "sans-serif", textTransform: "uppercase", marginBottom: 16 }}>
+                ☁ 10-Day Weather Overview — Perth & Margaret River
+              </div>
+              <div style={{ display: "flex", gap: 0, overflowX: "auto" }}>
+                {trip.days.map((d, i) => {
+                  const c = phaseColors[d.phase];
+                  return (
+                    <div key={i} style={{ flex: "1 0 80px", textAlign: "center", padding: "12px 6px", borderRight: i < trip.days.length - 1 ? "1px solid #1a2a40" : "none", background: i % 2 === 0 ? "transparent" : "#0a1018" }}>
+                      <div style={{ fontSize: 10, color: "#4a6080", fontFamily: "sans-serif", marginBottom: 4 }}>{d.date.split(",")[0]}</div>
+                      <div style={{ fontSize: 22, marginBottom: 4 }}>{d.weatherIcon}</div>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: c.accent, fontFamily: "sans-serif" }}>{d.high}°</div>
+                      <div style={{ fontSize: 11, color: "#4a6080", fontFamily: "sans-serif" }}>{d.low}°</div>
+                      <div style={{ width: 6, height: 6, borderRadius: "50%", margin: "6px auto 0", background: d.rain === "Low" ? "#4a9a4a" : d.rain === "Medium" ? "#d4a04a" : "#9a2a2a" }} />
+                    </div>
+                  );
+                })}
+              </div>
+              <div style={{ display: "flex", gap: 16, marginTop: 12, justifyContent: "flex-end" }}>
+                {[["#4a9a4a", "Low rain"], ["#d4a04a", "Med rain"], ["#9a2a2a", "High rain"]].map(([col, label]) => (
+                  <div key={label} style={{ display: "flex", gap: 5, alignItems: "center" }}>
+                    <div style={{ width: 8, height: 8, borderRadius: "50%", background: col }} />
+                    <span style={{ fontSize: 10, color: "#5a6a7a", fontFamily: "sans-serif" }}>{label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div style={{ textAlign: "center", marginTop: 32, fontSize: 11, color: "#3a4a5a", fontFamily: "sans-serif", letterSpacing: 1 }}>
+            Weather based on historical averages for Perth, WA in early June · Click any day card to expand details · Have an amazing trip! 🌿
+          </div>
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById("root"));
+    root.render(<App />);
+  </script>
+</body>
+</html>

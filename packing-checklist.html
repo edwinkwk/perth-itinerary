@@ -1,0 +1,1265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Family Trip Packing Checklist</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --sand: #f5efe6;
+    --terracotta: #c1603a;
+    --forest: #2d5a3d;
+    --sky: #7db8c9;
+    --gold: #d4a847;
+    --dark: #1e2c24;
+    --light-green: #e8f0ea;
+    --muted: #8a9e8f;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--sand);
+    font-family: 'DM Sans', sans-serif;
+    color: var(--dark);
+    min-height: 100vh;
+  }
+
+  .hero {
+    background: var(--forest);
+    color: white;
+    padding: 40px 32px 32px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 220px; height: 220px;
+    border-radius: 50%;
+    background: rgba(125, 184, 201, 0.18);
+  }
+
+  .hero::after {
+    content: '';
+    position: absolute;
+    bottom: -40px; left: -30px;
+    width: 140px; height: 140px;
+    border-radius: 50%;
+    background: rgba(212, 168, 71, 0.15);
+  }
+
+  .hero-label {
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--sky);
+    margin-bottom: 8px;
+    font-weight: 500;
+  }
+
+  .hero h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 32px;
+    line-height: 1.1;
+    margin-bottom: 16px;
+  }
+
+  .trip-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 16px;
+  }
+
+  .meta-badge {
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 20px;
+    padding: 5px 13px;
+    font-size: 12px;
+    color: rgba(255,255,255,0.9);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .progress-bar-wrap {
+    background: var(--forest);
+    padding: 0 32px 24px;
+  }
+
+  .progress-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: rgba(255,255,255,0.7);
+    font-size: 12px;
+    margin-bottom: 8px;
+  }
+
+  .progress-track {
+    background: rgba(255,255,255,0.15);
+    border-radius: 10px;
+    height: 8px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--sky), var(--gold));
+    border-radius: 10px;
+    transition: width 0.4s ease;
+  }
+
+  .legs-nav {
+    display: flex;
+    gap: 0;
+    padding: 16px 32px 0;
+    background: var(--sand);
+  }
+
+  .leg-btn {
+    flex: 1;
+    padding: 10px 12px;
+    border: none;
+    background: transparent;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--muted);
+    cursor: pointer;
+    border-bottom: 2px solid #ddd;
+    transition: all 0.2s;
+    letter-spacing: 0.5px;
+  }
+
+  .leg-btn.active {
+    color: var(--forest);
+    border-bottom-color: var(--terracotta);
+  }
+
+  .main {
+    padding: 20px 24px 60px;
+    max-width: 700px;
+    margin: 0 auto;
+  }
+
+  .section {
+    margin-bottom: 20px;
+    background: white;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(30,44,36,0.07);
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px;
+    cursor: pointer;
+    user-select: none;
+    border-bottom: 1px solid var(--light-green);
+    transition: background 0.2s;
+  }
+
+  .section-header:hover { background: var(--light-green); }
+
+  .section-title-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .section-icon {
+    width: 34px; height: 34px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 17px;
+    flex-shrink: 0;
+  }
+
+  .section-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--dark);
+  }
+
+  .section-count {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 1px;
+  }
+
+  .section-chevron {
+    color: var(--muted);
+    font-size: 18px;
+    transition: transform 0.3s;
+  }
+
+  .section-chevron.open { transform: rotate(180deg); }
+
+  .items-list {
+    padding: 6px 0;
+  }
+
+  .item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 10px 18px;
+    cursor: pointer;
+    transition: background 0.15s;
+    border-bottom: 1px solid #f5f5f5;
+  }
+
+  .item:last-child { border-bottom: none; }
+  .item:hover { background: #fafaf8; }
+
+  .checkbox {
+    width: 20px; height: 20px;
+    border-radius: 6px;
+    border: 2px solid #cdd8cf;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+    transition: all 0.2s;
+    background: white;
+  }
+
+  .item.checked .checkbox {
+    background: var(--forest);
+    border-color: var(--forest);
+  }
+
+  .checkmark {
+    opacity: 0;
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+    transition: opacity 0.2s;
+  }
+
+  .item.checked .checkmark { opacity: 1; }
+
+  .item-text {
+    flex: 1;
+  }
+
+  .item-name {
+    font-size: 14px;
+    color: var(--dark);
+    font-weight: 400;
+    transition: all 0.2s;
+    line-height: 1.4;
+  }
+
+  .item.checked .item-name {
+    color: var(--muted);
+    text-decoration: line-through;
+  }
+
+  .item-note {
+    font-size: 11px;
+    color: var(--sky);
+    margin-top: 2px;
+    font-weight: 500;
+  }
+
+  .item-who {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+  }
+
+  .who-tag {
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 10px;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+  }
+
+  .who-adult { background: #e8f0ea; color: var(--forest); }
+  .who-kids { background: #fef3e8; color: var(--terracotta); }
+  .who-all { background: #f0f6fa; color: #4a7a8a; }
+
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  .all-done-banner {
+    display: none;
+    background: linear-gradient(135deg, var(--forest), #3d7a52);
+    color: white;
+    text-align: center;
+    padding: 18px;
+    border-radius: 14px;
+    margin-bottom: 20px;
+    font-family: 'Playfair Display', serif;
+    font-size: 18px;
+  }
+
+  .summary-card {
+    background: white;
+    border-radius: 14px;
+    padding: 16px 18px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 12px rgba(30,44,36,0.07);
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+
+  .summary-icon {
+    font-size: 28px;
+  }
+
+  .summary-text {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  .summary-text strong {
+    color: var(--dark);
+    font-size: 14px;
+    display: block;
+    margin-bottom: 2px;
+  }
+
+  .reset-btn {
+    display: block;
+    margin: 0 auto;
+    padding: 10px 24px;
+    background: transparent;
+    border: 1.5px solid var(--muted);
+    border-radius: 20px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .reset-btn:hover {
+    border-color: var(--terracotta);
+    color: var(--terracotta);
+  }
+
+  .weather-block {
+    background: white;
+    border-radius: 14px;
+    overflow: hidden;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 12px rgba(30,44,36,0.07);
+  }
+
+  .weather-header {
+    padding: 14px 18px 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid var(--light-green);
+  }
+
+  .weather-header-icon {
+    font-size: 22px;
+  }
+
+  .weather-header-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--dark);
+  }
+
+  .weather-header-sub {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 1px;
+  }
+
+  .weather-days {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 0;
+  }
+
+  .weather-day {
+    padding: 12px 6px;
+    text-align: center;
+    border-right: 1px solid #f0f0f0;
+  }
+
+  .weather-day:last-child { border-right: none; }
+
+  .wd-name {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+  }
+
+  .wd-date {
+    font-size: 11px;
+    color: var(--dark);
+    font-weight: 500;
+    margin-bottom: 6px;
+  }
+
+  .wd-icon { font-size: 22px; margin-bottom: 6px; }
+
+  .wd-high {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--dark);
+  }
+
+  .wd-low {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 1px;
+  }
+
+  .wd-rain {
+    font-size: 10px;
+    color: var(--sky);
+    margin-top: 4px;
+    font-weight: 500;
+  }
+
+  .weather-note {
+    padding: 8px 18px 12px;
+    font-size: 11px;
+    color: var(--muted);
+    border-top: 1px solid #f5f5f5;
+    text-align: center;
+  }
+
+  /* ── INFOGRAPHIC: LOGISTICS ── */
+  .infographic {
+    background: white;
+    border-radius: 14px;
+    overflow: hidden;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 12px rgba(30,44,36,0.07);
+  }
+  .infographic-header {
+    padding: 14px 18px 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid var(--light-green);
+  }
+  .infographic-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--dark);
+  }
+  .infographic-sub {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 1px;
+  }
+
+  /* Flight infographic */
+  .flight-infographic {
+    padding: 20px 18px;
+  }
+  .flight-row {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin-bottom: 16px;
+    position: relative;
+  }
+  .flight-row:last-child { margin-bottom: 0; }
+  .flight-endpoint {
+    text-align: center;
+    min-width: 70px;
+  }
+  .fe-code {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--dark);
+    letter-spacing: -0.5px;
+  }
+  .fe-city {
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 1px;
+  }
+  .fe-time {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--forest);
+    margin-top: 3px;
+  }
+  .fe-date {
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 1px;
+  }
+  .flight-middle {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0 8px;
+    position: relative;
+  }
+  .flight-line {
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(90deg, var(--forest), var(--sky));
+    border-radius: 2px;
+    position: relative;
+    margin: 8px 0 4px;
+  }
+  .flight-line::after {
+    content: '✈';
+    position: absolute;
+    top: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 16px;
+    color: var(--terracotta);
+  }
+  .flight-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 2px;
+  }
+  .flight-duration {
+    font-size: 10px;
+    color: var(--sky);
+    font-weight: 500;
+  }
+  .flight-ref-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 18px 14px;
+    font-size: 11px;
+    color: var(--muted);
+  }
+  .fref-badge {
+    background: var(--light-green);
+    color: var(--forest);
+    padding: 3px 10px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .flight-divider {
+    height: 1px;
+    background: #f0f0f0;
+    margin: 4px 18px;
+  }
+  .return-label {
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 10px 18px 0;
+    font-weight: 600;
+  }
+
+  /* Accommodation infographic */
+  .accom-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+  }
+  .accom-card {
+    padding: 16px;
+    border-right: 1px solid #f0f0f0;
+    position: relative;
+  }
+  .accom-card:last-child { border-right: none; }
+  .ac-leg-badge {
+    display: inline-block;
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    margin-bottom: 8px;
+  }
+  .ac-leg-1 { background: #e8f0ea; color: var(--forest); }
+  .ac-leg-2 { background: #fef3e8; color: var(--terracotta); }
+  .ac-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--dark);
+    line-height: 1.3;
+    margin-bottom: 10px;
+  }
+  .ac-timeline {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin-bottom: 10px;
+    position: relative;
+  }
+  .ac-timeline::before {
+    content: '';
+    position: absolute;
+    left: 5px;
+    top: 8px;
+    bottom: 8px;
+    width: 2px;
+    background: linear-gradient(180deg, var(--forest), var(--sky));
+    border-radius: 2px;
+  }
+  .ac-event {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 3px 0;
+  }
+  .ac-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid var(--forest);
+    background: white;
+    flex-shrink: 0;
+    margin-top: 1px;
+    z-index: 1;
+  }
+  .ac-dot.out { border-color: var(--sky); }
+  .ac-event-text { font-size: 11px; line-height: 1.4; }
+  .ac-event-label { color: var(--muted); font-size: 10px; }
+  .ac-event-value { color: var(--dark); font-weight: 500; }
+  .ac-detail {
+    font-size: 10px;
+    color: #777;
+    margin-bottom: 3px;
+    display: flex;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  .ac-ref {
+    display: inline-block;
+    margin-top: 6px;
+    font-size: 10px;
+    background: var(--light-green);
+    color: var(--forest);
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 600;
+  }
+  .ac-warn {
+    display: block;
+    margin-top: 4px;
+    font-size: 10px;
+    background: #fff8e6;
+    color: #a05a00;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-weight: 500;
+  }
+
+  /* Journey timeline */
+  .journey-timeline {
+    padding: 16px 18px;
+    position: relative;
+  }
+  .jt-track {
+    display: flex;
+    align-items: center;
+    position: relative;
+    margin-bottom: 12px;
+  }
+  .jt-node {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+    z-index: 1;
+  }
+  .jt-node.dep { background: var(--forest); }
+  .jt-node.mid1 { background: var(--terracotta); }
+  .jt-node.mid2 { background: var(--sky); color: white; }
+  .jt-node.arr { background: var(--forest); }
+  .jt-line {
+    flex: 1;
+    height: 3px;
+    position: relative;
+  }
+  .jt-line.leg1 { background: linear-gradient(90deg, var(--forest), var(--terracotta)); }
+  .jt-line.leg2 { background: linear-gradient(90deg, var(--terracotta), var(--sky)); }
+  .jt-line.leg3 { background: linear-gradient(90deg, var(--sky), var(--forest)); }
+  .jt-labels {
+    display: flex;
+    justify-content: space-between;
+    padding: 0 0 4px;
+  }
+  .jt-label {
+    font-size: 10px;
+    text-align: center;
+    color: var(--dark);
+    font-weight: 600;
+    flex: 1;
+  }
+  .jt-label:first-child { text-align: left; }
+  .jt-label:last-child { text-align: right; }
+  .jt-sublabel {
+    font-size: 9px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+  .jt-leg-labels {
+    display: flex;
+    margin-top: 8px;
+  }
+  .jt-leg-label {
+    flex: 1;
+    text-align: center;
+    font-size: 9px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-label">Family Holiday 2025</div>
+  <h1>Packing<br>Checklist</h1>
+  <div class="trip-meta">
+    <div class="meta-badge">📅 2–11 June</div>
+    <div class="meta-badge">🌿 Margaret River 2–6 Jun</div>
+    <div class="meta-badge">🏙️ Perth City 6–11 Jun</div>
+    <div class="meta-badge">👨‍👩‍👦‍👦 2 adults + 2 boys</div>
+  </div>
+</div>
+
+<div class="progress-bar-wrap">
+  <div class="progress-header">
+    <span>Items packed</span>
+    <span id="progress-text">0 / 0</span>
+  </div>
+  <div class="progress-track">
+    <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+  </div>
+</div>
+
+<div class="legs-nav">
+  <button class="leg-btn active" onclick="switchTab('all', this)">All Items</button>
+  <button class="leg-btn" onclick="switchTab('margaret', this)">🌿 Margaret River</button>
+  <button class="leg-btn" onclick="switchTab('perth', this)">🏙️ Perth</button>
+</div>
+
+<div class="main">
+
+  <div id="tab-all" class="tab-content active">
+
+    <!-- WEATHER: MARGARET RIVER -->
+    <div class="weather-block">
+      <div class="weather-header">
+        <div class="weather-header-icon">🌿</div>
+        <div>
+          <div class="weather-header-title">Margaret River — 2 to 6 June</div>
+          <div class="weather-header-sub">Cool, windy & showery. Layers essential.</div>
+        </div>
+      </div>
+      <div class="weather-days">
+        <div class="weather-day">
+          <div class="wd-name">Tue</div>
+          <div class="wd-date">2 Jun</div>
+          <div class="wd-icon">🌤️</div>
+          <div class="wd-high">17°C</div>
+          <div class="wd-low">15°C</div>
+          <div class="wd-rain">Mild</div>
+        </div>
+        <div class="weather-day">
+          <div class="wd-name">Wed</div>
+          <div class="wd-date">3 Jun</div>
+          <div class="wd-icon">🌦️</div>
+          <div class="wd-high">17°C</div>
+          <div class="wd-low">15°C</div>
+          <div class="wd-rain">Showers</div>
+        </div>
+        <div class="weather-day">
+          <div class="wd-name">Thu</div>
+          <div class="wd-date">4 Jun</div>
+          <div class="wd-icon">🌦️</div>
+          <div class="wd-high">17°C</div>
+          <div class="wd-low">16°C</div>
+          <div class="wd-rain">Showers</div>
+        </div>
+        <div class="weather-day">
+          <div class="wd-name">Fri</div>
+          <div class="wd-date">5 Jun</div>
+          <div class="wd-icon">🌤️</div>
+          <div class="wd-high">17°C</div>
+          <div class="wd-low">15°C</div>
+          <div class="wd-rain">Mild</div>
+        </div>
+        <div class="weather-day">
+          <div class="wd-name">Sat</div>
+          <div class="wd-date">6 Jun</div>
+          <div class="wd-icon">🌧️</div>
+          <div class="wd-high">17°C</div>
+          <div class="wd-low">15°C</div>
+          <div class="wd-rain">Rain</div>
+        </div>
+      </div>
+      <div class="weather-note">🌬️ Westerly winds 8–10 m/s · Humidity ~71% · Feels like 11–13°C · Sea 20°C · Based on June climatological averages</div>
+    </div>
+
+    <!-- WEATHER: PERTH -->
+    <div class="weather-block">
+      <div class="weather-header">
+        <div class="weather-header-icon">🏙️</div>
+        <div>
+          <div class="weather-header-title">Perth City — 6 to 11 June</div>
+          <div class="weather-header-sub">Mild & mostly fine, some rain. More sunshine than Margaret River.</div>
+        </div>
+      </div>
+      <div class="weather-days" style="grid-template-columns: repeat(6, 1fr);">
+        <div class="weather-day">
+          <div class="wd-name">Sat</div>
+          <div class="wd-date">6 Jun</div>
+          <div class="wd-icon">🌦️</div>
+          <div class="wd-high">19°C</div>
+          <div class="wd-low">12°C</div>
+          <div class="wd-rain">Showers</div>
+        </div>
+        <div class="weather-day">
+          <div class="wd-name">Sun</div>
+          <div class="wd-date">7 Jun</div>
+          <div class="wd-icon">🌤️</div>
+          <div class="wd-high">18°C</div>
+          <div class="wd-low">12°C</div>
+          <div class="wd-rain">Mild</div>
+        </div>
+        <div class="weather-day">
+          <div class="wd-name">Mon</div>
+          <div class="wd-date">8 Jun</div>
+          <div class="wd-icon">🌤️</div>
+          <div class="wd-high">18°C</div>
+          <div class="wd-low">13°C</div>
+          <div class="wd-rain">Mild</div>
+        </div>
+        <div class="weather-day">
+          <div class="wd-name">Tue</div>
+          <div class="wd-date">9 Jun</div>
+          <div class="wd-icon">🌦️</div>
+          <div class="wd-high">19°C</div>
+          <div class="wd-low">13°C</div>
+          <div class="wd-rain">Showers</div>
+        </div>
+        <div class="weather-day">
+          <div class="wd-name">Wed</div>
+          <div class="wd-date">10 Jun</div>
+          <div class="wd-icon">🌧️</div>
+          <div class="wd-high">18°C</div>
+          <div class="wd-low">12°C</div>
+          <div class="wd-rain">Rain</div>
+        </div>
+        <div class="weather-day">
+          <div class="wd-name">Thu</div>
+          <div class="wd-date">11 Jun</div>
+          <div class="wd-icon">🌧️</div>
+          <div class="wd-high">18°C</div>
+          <div class="wd-low">12°C</div>
+          <div class="wd-rain">Rain</div>
+        </div>
+      </div>
+      <div class="weather-note">🌬️ NE winds 6–7 m/s · Humidity ~72% · Feels like 11–12°C · 7 hrs sunshine/day avg · Based on June climatological averages</div>
+    </div>
+
+    <!-- DOCUMENTS -->
+    <div class="section" id="sec-docs">
+      <div class="section-header" onclick="toggleSection('docs')">
+        <div class="section-title-row">
+          <div class="section-icon" style="background:#fff3e0;">📄</div>
+          <div>
+            <div class="section-title">Documents & Essentials</div>
+            <div class="section-count" id="count-docs">0 / 0 packed</div>
+          </div>
+        </div>
+        <div class="section-chevron open" id="chev-docs">▼</div>
+      </div>
+      <div class="items-list" id="list-docs">
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Photo ID / Drivers licence</div></div><div class="item-who"><span class="who-tag who-adult">Adults</span></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Medicare cards</div></div><div class="item-who"><span class="who-tag who-all">All</span></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Travel insurance documents</div></div><div class="item-who"><span class="who-tag who-all">All</span></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Accommodation booking confirmations</div></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Car rental / transport bookings</div></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">No Birds car rental ref: 9B477M</div><div class="item-note">Pick-up: 2 Jun 07:00 · Return: 11 Jun 14:30 · 172 Kewdale Rd · +61 8 6467 0400</div></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Driver's licence + Visa/Mastercard (same name)</div><div class="item-note">Required for No Birds car collection</div></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Emergency contacts list</div></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Cash & cards</div></div></div>
+      </div>
+    </div>
+
+    <!-- CLOTHING ADULTS -->
+    <div class="section" id="sec-adult-clothes">
+      <div class="section-header" onclick="toggleSection('adult-clothes')">
+        <div class="section-title-row">
+          <div class="section-icon" style="background:#e8f0ea;">👔</div>
+          <div>
+            <div class="section-title">Adults' Clothing</div>
+            <div class="section-count" id="count-adult-clothes">0 / 0 packed</div>
+          </div>
+        </div>
+        <div class="section-chevron open" id="chev-adult-clothes">▼</div>
+      </div>
+      <div class="items-list" id="list-adult-clothes">
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">T-shirts / casual tops (×6 each)</div></div><div class="item-who"><span class="who-tag who-adult">Adults ×2</span></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Long-sleeve shirts / flannels (×3 each)</div><div class="item-note">Cool June evenings in Margaret River</div></div><div class="item-who"><span class="who-tag who-adult">Adults ×2</span></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Warm mid-layer / fleece (×1 each)</div></div><div class="item-who"><span class="who-tag who-adult">Adults ×2</span></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Waterproof jacket / rain coat</div></div><div class="item-who"><span class="who-tag who-adult">Adults ×2</span></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Jeans or pants (×2 each)</div></div><div class="item-who"><span class="who-tag who-adult">Adults ×2</span></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Comfortable shorts (×2 each)</div></div><div class="item-who"><span class="who-tag who-adult">Adults ×2</span></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Smart casual outfit for Perth</div><div class="item-note">Restaurants & evening outings</div></div><div class="item-who"><span class="who-tag who-adult">Adults ×2</span></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Underwear & socks (×10 each)</div></div><div class="item-who"><span class="who-tag who-adult">Adults ×2</span></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Pyjamas / sleepwear (×2 each)</div></div><div class="item-who"><span class="who-tag who-adult">Adults ×2</span></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Swimwear</div></div><div class="item-who"><span class="who-tag who-adult">Adults ×2</span></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Sneakers / casual shoes</div></div><div class="item-who"><span class="who-tag who-adult">Adults ×2</span></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Walking / hiking shoes</div></div><div class="item-who"><span class="who-tag who-adult">Adults ×2</span></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Sandals or thongs</div></div><div class="item-who"><span class="who-tag who-adult">Adults ×2</span></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Hat / beanie</div></div><div class="item-who"><span class="who-tag who-adult">Adults ×2</span></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Scarf / light gloves</div><div class="item-note">Windy winter evenings</div></div><div class="item-who"><span class="who-tag who-adult">Adults ×2</span></div></div>
+      </div>
+    </div>
+
+    <!-- KIDS CLOTHING -->
+    <div class="section" id="sec-kids-clothes">
+      <div class="section-header" onclick="toggleSection('kids-clothes')">
+        <div class="section-title-row">
+          <div class="section-icon" style="background:#fef3e8;">👕</div>
+          <div>
+            <div class="section-title">Kids' Clothing (Ages 4 & 7)</div>
+            <div class="section-count" id="count-kids-clothes">0 / 0 packed</div>
+          </div>
+        </div>
+        <div class="section-chevron open" id="chev-kids-clothes">▼</div>
+      </div>
+      <div class="items-list" id="list-kids-clothes">
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">T-shirts (×6 each)</div><div class="item-note">Pack extra for the 4-year-old</div></div><div class="item-who"><span class="who-tag who-kids">Boys ×2</span></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Long-sleeve tops / thermals (×4 each)</div></div><div class="item-who"><span class="who-tag who-kids">Boys ×2</span></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Fleece or jumper (×2 each)</div></div><div class="item-who"><span class="who-tag who-kids">Boys ×2</span></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Waterproof rain jacket</div></div><div class="item-who"><span class="who-tag who-kids">Boys ×2</span></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Pants / jeans (×3 each)</div></div><div class="item-who"><span class="who-tag who-kids">Boys ×2</span></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Shorts (×2 each)</div></div><div class="item-who"><span class="who-tag who-kids">Boys ×2</span></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Underwear & socks (×10 each)</div></div><div class="item-who"><span class="who-tag who-kids">Boys ×2</span></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Pyjamas (×2 each)</div></div><div class="item-who"><span class="who-tag who-kids">Boys ×2</span></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Swimwear</div></div><div class="item-who"><span class="who-tag who-kids">Boys ×2</span></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Sneakers / trainers</div></div><div class="item-who"><span class="who-tag who-kids">Boys ×2</span></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Gumboots / waterproof shoes</div><div class="item-note">Great for muddy Margaret River walks</div></div><div class="item-who"><span class="who-tag who-kids">Boys ×2</span></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Sandals or thongs</div></div><div class="item-who"><span class="who-tag who-kids">Boys ×2</span></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Warm beanie & gloves</div></div><div class="item-who"><span class="who-tag who-kids">Boys ×2</span></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Sun hat (for warmer Perth days)</div></div><div class="item-who"><span class="who-tag who-kids">Boys ×2</span></div></div>
+      </div>
+    </div>
+
+    <!-- TOILETRIES -->
+    <div class="section" id="sec-toiletries">
+      <div class="section-header" onclick="toggleSection('toiletries')">
+        <div class="section-title-row">
+          <div class="section-icon" style="background:#f0f6fa;">🧴</div>
+          <div>
+            <div class="section-title">Toiletries & Personal Care</div>
+            <div class="section-count" id="count-toiletries">0 / 0 packed</div>
+          </div>
+        </div>
+        <div class="section-chevron open" id="chev-toiletries">▼</div>
+      </div>
+      <div class="items-list" id="list-toiletries">
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Toothbrushes & toothpaste</div></div><div class="item-who"><span class="who-tag who-all">All ×4</span></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Shampoo & conditioner</div></div><div class="item-who"><span class="who-tag who-all">All</span></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Body wash / soap</div></div><div class="item-who"><span class="who-tag who-all">All</span></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Kids' shampoo & body wash</div></div><div class="item-who"><span class="who-tag who-kids">Boys</span></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Sunscreen SPF 50+ (kids & adults)</div><div class="item-note">Still needed even in winter WA</div></div><div class="item-who"><span class="who-tag who-all">All</span></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Moisturiser</div></div><div class="item-who"><span class="who-tag who-adult">Adults</span></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Deodorant</div></div><div class="item-who"><span class="who-tag who-adult">Adults</span></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Lip balm</div></div><div class="item-who"><span class="who-tag who-all">All</span></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Hair brush / comb</div></div><div class="item-who"><span class="who-tag who-all">All</span></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Nail clippers</div></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Razors & shaving cream</div></div><div class="item-who"><span class="who-tag who-adult">Adults</span></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Feminine hygiene products (if needed)</div></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Toilet bag / organiser</div></div></div>
+      </div>
+    </div>
+
+    <!-- HEALTH & FIRST AID -->
+    <div class="section" id="sec-health">
+      <div class="section-header" onclick="toggleSection('health')">
+        <div class="section-title-row">
+          <div class="section-icon" style="background:#fde8e8;">🩹</div>
+          <div>
+            <div class="section-title">Health & First Aid</div>
+            <div class="section-count" id="count-health">0 / 0 packed</div>
+          </div>
+        </div>
+        <div class="section-chevron open" id="chev-health">▼</div>
+      </div>
+      <div class="items-list" id="list-health">
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Prescription medications</div></div><div class="item-who"><span class="who-tag who-all">All</span></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Children's paracetamol (Panadol)</div></div><div class="item-who"><span class="who-tag who-kids">Boys</span></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Adult pain relief (Ibuprofen / Panadol)</div></div><div class="item-who"><span class="who-tag who-adult">Adults</span></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Antihistamine (kids & adults)</div></div><div class="item-who"><span class="who-tag who-all">All</span></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Band-aids / plasters (assorted)</div></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Antiseptic cream / wipes</div></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Motion sickness tablets</div><div class="item-note">Windy roads around Margaret River</div></div><div class="item-who"><span class="who-tag who-kids">Boys</span></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Insect repellent</div></div><div class="item-who"><span class="who-tag who-all">All</span></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Thermometer</div></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Hand sanitiser</div></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Tissues / wet wipes (for kids)</div></div><div class="item-who"><span class="who-tag who-kids">Boys</span></div></div>
+      </div>
+    </div>
+
+    <!-- TECH & GEAR -->
+    <div class="section" id="sec-tech">
+      <div class="section-header" onclick="toggleSection('tech')">
+        <div class="section-title-row">
+          <div class="section-icon" style="background:#e8e8f8;">📱</div>
+          <div>
+            <div class="section-title">Tech & Gear</div>
+            <div class="section-count" id="count-tech">0 / 0 packed</div>
+          </div>
+        </div>
+        <div class="section-chevron open" id="chev-tech">▼</div>
+      </div>
+      <div class="items-list" id="list-tech">
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Phones & chargers</div></div><div class="item-who"><span class="who-tag who-adult">Adults ×2</span></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Tablet / iPad with kids' content downloaded</div><div class="item-note">Download shows & games for travel days</div></div><div class="item-who"><span class="who-tag who-kids">Boys</span></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Tablet charger & cable</div></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Portable power bank</div></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Kids' headphones</div></div><div class="item-who"><span class="who-tag who-kids">Boys ×2</span></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Camera / GoPro</div></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Camera memory cards & charger</div></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Power board / travel adaptor</div></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Reusable water bottles</div></div><div class="item-who"><span class="who-tag who-all">All ×4</span></div></div>
+      </div>
+    </div>
+
+    <!-- KIDS' EXTRAS -->
+    <div class="section" id="sec-kids-extras">
+      <div class="section-header" onclick="toggleSection('kids-extras')">
+        <div class="section-title-row">
+          <div class="section-icon" style="background:#fef3e8;">🧸</div>
+          <div>
+            <div class="section-title">Kids' Entertainment & Comfort</div>
+            <div class="section-count" id="count-kids-extras">0 / 0 packed</div>
+          </div>
+        </div>
+        <div class="section-chevron open" id="chev-kids-extras">▼</div>
+      </div>
+      <div class="items-list" id="list-kids-extras">
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Favourite comfort toy / stuffed animal</div><div class="item-note">Non-negotiable for the 4-year-old!</div></div><div class="item-who"><span class="who-tag who-kids">Boys</span></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Small backpack (for each boy)</div></div><div class="item-who"><span class="who-tag who-kids">Boys ×2</span></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Activity / colouring books</div></div><div class="item-who"><span class="who-tag who-kids">Boys</span></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Coloured pencils / crayons</div></div><div class="item-who"><span class="who-tag who-kids">Boys</span></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Card games (Uno, Snap etc.)</div></div><div class="item-who"><span class="who-tag who-kids">Boys</span></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Small toys / figures</div></div><div class="item-who"><span class="who-tag who-kids">Boys</span></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Kids' snacks for the car</div><div class="item-note">Muesli bars, fruit pouches, crackers</div></div><div class="item-who"><span class="who-tag who-kids">Boys</span></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Night light (for the 4-year-old)</div></div><div class="item-who"><span class="who-tag who-kids">Boys</span></div></div>
+      </div>
+    </div>
+
+    <!-- MARGARET RIVER SPECIFIC -->
+    <div class="section" id="sec-margaret">
+      <div class="section-header" onclick="toggleSection('margaret')">
+        <div class="section-title-row">
+          <div class="section-icon" style="background:#e8f0ea;">🌿</div>
+          <div>
+            <div class="section-title">Margaret River Specifics</div>
+            <div class="section-count" id="count-margaret">0 / 0 packed</div>
+          </div>
+        </div>
+        <div class="section-chevron open" id="chev-margaret">▼</div>
+      </div>
+      <div class="items-list" id="list-margaret">
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Day pack / hiking bag</div></div><div class="item-who"><span class="who-tag who-all">All</span></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Torch / headlamps (for caves)</div><div class="item-note">Mammoth Cave, Lake Cave etc.</div></div><div class="item-who"><span class="who-tag who-all">All</span></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Binoculars (for wildlife spotting)</div></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Picnic rug / blanket</div></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Snacks & picnic supplies</div></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Extra layers for the kids (cold mornings)</div></div><div class="item-who"><span class="who-tag who-kids">Boys</span></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Muddy clothes bag / laundry bag</div><div class="item-note">For after outdoor adventures</div></div></div>
+      </div>
+    </div>
+
+    <!-- PERTH SPECIFIC -->
+    <div class="section" id="sec-perth">
+      <div class="section-header" onclick="toggleSection('perth')">
+        <div class="section-title-row">
+          <div class="section-icon" style="background:#f0f6fa;">🏙️</div>
+          <div>
+            <div class="section-title">Perth City Specifics</div>
+            <div class="section-count" id="count-perth">0 / 0 packed</div>
+          </div>
+        </div>
+        <div class="section-chevron open" id="chev-perth">▼</div>
+      </div>
+      <div class="items-list" id="list-perth">
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Smarter clothes for dining / shows</div></div><div class="item-who"><span class="who-tag who-all">All</span></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">City transport card / cash</div></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Umbrella (compact)</div></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Reusable shopping bags</div></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Kids' city activity ideas list</div><div class="item-note">Perth Zoo, Scitech, Elizabeth Quay</div></div><div class="item-who"><span class="who-tag who-kids">Boys</span></div></div>
+      </div>
+    </div>
+
+    <!-- BAGS -->
+    <div class="section" id="sec-bags">
+      <div class="section-header" onclick="toggleSection('bags')">
+        <div class="section-title-row">
+          <div class="section-icon" style="background:#f5f0ff;">🧳</div>
+          <div>
+            <div class="section-title">Bags & Luggage</div>
+            <div class="section-count" id="count-bags">0 / 0 packed</div>
+          </div>
+        </div>
+        <div class="section-chevron open" id="chev-bags">▼</div>
+      </div>
+      <div class="items-list" id="list-bags">
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Main suitcases / bags packed</div></div><div class="item-who"><span class="who-tag who-adult">Adults ×2</span></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Kids' bags / suitcase</div></div><div class="item-who"><span class="who-tag who-kids">Boys</span></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Carry-on / day bag</div></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Packing cubes / zip bags</div></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Luggage tags & locks</div></div></div>
+      </div>
+    </div>
+
+    <button class="reset-btn" onclick="resetAll()">↺ Reset all items</button>
+
+  </div><!-- end tab-all -->
+
+  <div id="tab-margaret" class="tab-content">
+    <div class="summary-card">
+      <div class="summary-icon">🌿</div>
+      <div class="summary-text">
+        <strong>Leg 1 — Margaret River (2–6 June, 4 nights)</strong>
+        Wine region meets wild coast. June means cool mornings, possible rain, and beautiful empty beaches. Cave tours, forest walks, farm stays.
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-header">
+        <div class="section-title-row">
+          <div class="section-icon" style="background:#e8f0ea;">📋</div>
+          <div><div class="section-title">Key Things For Margaret River</div></div>
+        </div>
+      </div>
+      <div class="items-list">
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Waterproof jackets (all 4)</div><div class="item-note">Rain showers common in June</div></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Gumboots for the kids</div><div class="item-note">Muddy trails & puddles = happy boys</div></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Torches for cave visits</div></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Picnic rug & snacks</div></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Warm layers for evening</div></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Kids' motion sickness tablets</div><div class="item-note">Winding roads through the region</div></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Insect repellent</div></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Camera (for amazing scenery!)</div></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="tab-perth" class="tab-content">
+    <div class="summary-card">
+      <div class="summary-icon">🏙️</div>
+      <div class="summary-text">
+        <strong>Leg 2 — Perth City (6–11 June, 5 nights)</strong>
+        A lively, sunny city with great waterfront and attractions. Kids love Perth Zoo, Scitech, and Kings Park. Slightly warmer than Margaret River.
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-header">
+        <div class="section-title-row">
+          <div class="section-icon" style="background:#f0f6fa;">📋</div>
+          <div><div class="section-title">Key Things For Perth</div></div>
+        </div>
+      </div>
+      <div class="items-list">
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Smarter outfits for going out</div><div class="item-note">Perth has great restaurants & bars</div></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Compact umbrella</div></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Comfortable walking shoes</div><div class="item-note">Lots of city exploring</div></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">City transport card</div></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Reusable bags for shopping / markets</div></div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"><span class="checkmark">✓</span></div><div class="item-text"><div class="item-name">Kids' activity list (Perth Zoo, Scitech etc.)</div></div></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  function toggleSection(id) {
+    const list = document.getElementById('list-' + id);
+    const chev = document.getElementById('chev-' + id);
+    if (list.style.display === 'none') {
+      list.style.display = 'block';
+      chev.textContent = '▼';
+      chev.classList.add('open');
+    } else {
+      list.style.display = 'none';
+      chev.textContent = '▼';
+      chev.classList.remove('open');
+    }
+  }
+
+  function toggleItem(el) {
+    el.classList.toggle('checked');
+    updateProgress();
+  }
+
+  function updateProgress() {
+    const allItems = document.querySelectorAll('#tab-all .item');
+    const checked = document.querySelectorAll('#tab-all .item.checked');
+    const total = allItems.length;
+    const done = checked.length;
+    const pct = total ? Math.round((done / total) * 100) : 0;
+    document.getElementById('progress-fill').style.width = pct + '%';
+    document.getElementById('progress-text').textContent = done + ' / ' + total;
+
+    // Per section counts
+    const sections = ['docs','adult-clothes','kids-clothes','toiletries','health','tech','kids-extras','margaret','perth','bags'];
+    sections.forEach(s => {
+      const list = document.getElementById('list-' + s);
+      if (!list) return;
+      const items = list.querySelectorAll('.item');
+      const chk = list.querySelectorAll('.item.checked');
+      const countEl = document.getElementById('count-' + s);
+      if (countEl) countEl.textContent = chk.length + ' / ' + items.length + ' packed';
+    });
+  }
+
+  function switchTab(tab, btn) {
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.leg-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-' + tab).classList.add('active');
+    if (btn) btn.classList.add('active');
+  }
+
+  function resetAll() {
+    document.querySelectorAll('.item').forEach(i => i.classList.remove('checked'));
+    updateProgress();
+  }
+
+  updateProgress();
+</script>
+</body>
+</html>
