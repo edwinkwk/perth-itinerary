@@ -2137,36 +2137,12 @@
   }
 
   async function resetAll() {
-    if (!confirm('Reset everything? This will restore deleted sections and items, remove added ones, clear all edits, and uncheck everything — for everyone.')) return;
-
-    // Remove all sections
-    document.querySelectorAll('#tab-all .section').forEach(s => s.remove());
-    customSectionIds = [];
-
-    // Restore base sections in original order
-    const area = document.getElementById('add-section-area');
-    SECTIONS.forEach(id => {
-      const shell = createBaseSectionShell(id);
-      if (shell) area.before(shell);
-    });
-
-    // Re-insert base items from snapshots
-    baseItemSnapshots.forEach(({ key, sectionId, html }) => {
-      const list = document.getElementById('list-' + sectionId);
-      if (!list) return;
-      const tmp = document.createElement('div');
-      tmp.innerHTML = html;
-      const el = tmp.firstElementChild;
-      el.dataset.key = key;
-      el.classList.remove('checked');
-      el.onclick = () => toggleItem(el);
-      wireItemName(el); wireItemNote(el); wireTags(el);
-      el.appendChild(makeEditBtn(el)); el.appendChild(makeDeleteBtn(el));
-      list.insertBefore(el, document.getElementById('add-row-' + sectionId));
-    });
-
+    if (!confirm('Uncheck all items? This clears everyone\'s progress but keeps all edits, added items, and sections.')) return;
+    document.querySelectorAll('#tab-all .item').forEach(el => el.classList.remove('checked'));
     updateProgress();
-    await pushState({ checked:{}, removed:[], custom:[], names:{}, notes:{}, tags:{}, removedSections:[], customSections:[] });
+    const state = currentState();
+    state.checked = {};
+    await pushState(state);
   }
 
   // ── Boot ──────────────────────────────────────────────────────────────────
