@@ -364,24 +364,39 @@
     color: var(--terracotta);
   }
 
-  .item-delete {
+  .item-delete, .item-edit {
     background: none;
     border: none;
-    color: #ccc;
-    font-size: 18px;
+    font-size: 15px;
     line-height: 1;
     cursor: pointer;
     padding: 0 2px;
     flex-shrink: 0;
     opacity: 0;
     transition: opacity 0.15s, color 0.15s;
+    color: #ccc;
   }
 
-  .item:hover .item-delete { opacity: 1; }
+  .item:hover .item-delete,
+  .item:hover .item-edit { opacity: 1; }
   .item-delete:hover { color: var(--terracotta); }
+  .item-edit:hover   { color: var(--sky); }
 
   @media (hover: none) {
-    .item-delete { opacity: 0.35; }
+    .item-delete, .item-edit { opacity: 0.35; }
+  }
+
+  .item-name-input {
+    flex: 1;
+    border: 1.5px solid var(--forest);
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: var(--dark);
+    outline: none;
+    background: #f8faf8;
+    min-width: 0;
   }
 
   .add-item-row {
@@ -1319,9 +1334,12 @@
       const key = 'b' + i;
       el.dataset.key = key;
       baseItemKeys.push(key);
-      el.appendChild(makeDeleteBtn(el));
+      el.onclick = () => toggleItem(el);
       const sectionId = el.closest('.items-list')?.id.replace('list-', '');
-      baseItemSnapshots.push({ key, sectionId, html: el.outerHTML });
+      baseItemSnapshots.push({ key, sectionId, html: el.outerHTML }); // snapshot before buttons
+      wireItemName(el);
+      el.appendChild(makeEditBtn(el));
+      el.appendChild(makeDeleteBtn(el));
     });
 
     // Inject "Add item" rows into each section
@@ -1356,6 +1374,46 @@
     return btn;
   }
 
+  function makeEditBtn(itemEl) {
+    const btn = document.createElement('button');
+    btn.className = 'item-edit';
+    btn.title = 'Edit item';
+    btn.textContent = '✎';
+    btn.onclick = e => { e.stopPropagation(); startEditName(itemEl); };
+    return btn;
+  }
+
+  function wireItemName(itemEl) {
+    const nameEl = itemEl.querySelector('.item-name');
+    if (nameEl) nameEl.ondblclick = e => { e.stopPropagation(); startEditName(itemEl); };
+  }
+
+  function startEditName(itemEl) {
+    const nameEl = itemEl.querySelector('.item-name');
+    if (!nameEl || itemEl.querySelector('.item-name-input')) return;
+    const original = nameEl.textContent;
+    const input = document.createElement('input');
+    input.className = 'item-name-input';
+    input.value = original;
+    nameEl.replaceWith(input);
+    input.focus();
+    input.select();
+    const finish = (save) => {
+      const newName = input.value.trim() || original;
+      const restored = document.createElement('div');
+      restored.className = 'item-name';
+      restored.textContent = save ? newName : original;
+      restored.ondblclick = e => { e.stopPropagation(); startEditName(itemEl); };
+      input.replaceWith(restored);
+      if (save && newName !== original) scheduleSave();
+    };
+    input.onblur  = () => finish(true);
+    input.onkeydown = e => {
+      if (e.key === 'Enter')  { e.preventDefault(); input.blur(); }
+      if (e.key === 'Escape') { input.value = original; input.blur(); }
+    };
+  }
+
   function makeItemEl(key, name) {
     const el = document.createElement('div');
     el.className = 'item';
@@ -1364,6 +1422,8 @@
     el.innerHTML =
       `<div class="checkbox"><span class="checkmark">✓</span></div>` +
       `<div class="item-text"><div class="item-name">${escHtml(name)}</div></div>`;
+    wireItemName(el);
+    el.appendChild(makeEditBtn(el));
     el.appendChild(makeDeleteBtn(el));
     return el;
   }
@@ -1409,21 +1469,31 @@
   // ── State ─────────────────────────────────────────────────────────────────
 
   function currentState() {
-    const checked = {}, removed = [], custom = [];
+    const checked = {}, removed = [], custom = [], names = {};
     document.querySelectorAll('#tab-all .item').forEach(el => {
       const k = el.dataset.key;
       if (!k) return;
       if (el.classList.contains('checked')) checked[k] = 1;
+      const nameText = el.querySelector('.item-name')?.textContent || '';
       if (k.startsWith('c')) {
         const list = el.closest('.items-list');
         const section = list?.id.replace('list-', '');
-        custom.push({ id: k, section, name: el.querySelector('.item-name').textContent });
+        custom.push({ id: k, section, name: nameText });
+      } else {
+        // Store name only if it differs from the original snapshot
+        const snap = baseItemSnapshots.find(s => s.key === k);
+        if (snap) {
+          const tmp = document.createElement('div');
+          tmp.innerHTML = snap.html;
+          const origName = tmp.querySelector('.item-name')?.textContent || '';
+          if (nameText !== origName) names[k] = nameText;
+        }
       }
     });
     baseItemKeys.forEach(k => {
       if (!document.querySelector(`[data-key="${k}"]`)) removed.push(k);
     });
-    return { checked, removed, custom };
+    return { checked, removed, custom, names };
   }
 
   function applyState(state) {
@@ -1436,7 +1506,7 @@
       return;
     }
 
-    const { checked = {}, removed = [], custom = [] } = state;
+    const { checked = {}, removed = [], custom = [], names = {} } = state;
 
     // Hide removed base items
     removed.forEach(k => {
@@ -1452,10 +1522,15 @@
       list.insertBefore(makeItemEl(id, name), document.getElementById('add-row-' + section));
     });
 
-    // Apply checked state
+    // Apply checked state and any renamed base items
     document.querySelectorAll('#tab-all .item').forEach(el => {
       const k = el.dataset.key;
-      if (k) el.classList.toggle('checked', !!checked[k]);
+      if (!k) return;
+      el.classList.toggle('checked', !!checked[k]);
+      if (names[k]) {
+        const nameEl = el.querySelector('.item-name');
+        if (nameEl && !el.querySelector('.item-name-input')) nameEl.textContent = names[k];
+      }
     });
 
     updateProgress();
@@ -1571,24 +1646,20 @@
       list.querySelectorAll('.item').forEach(el => el.remove());
     });
 
-    // Re-insert base items from snapshots and re-attach delete buttons
-    baseItemSnapshots.forEach(({ sectionId, html }) => {
+    // Re-insert base items from snapshots (snapshots have no buttons; re-wire everything)
+    baseItemSnapshots.forEach(({ key, sectionId, html }) => {
       const list = document.getElementById('list-' + sectionId);
       if (!list) return;
       const tmp = document.createElement('div');
       tmp.innerHTML = html;
       const el = tmp.firstElementChild;
+      el.dataset.key = key;
       el.classList.remove('checked');
-      // Re-wire onclick and delete button (outerHTML loses event listeners)
       el.onclick = () => toggleItem(el);
-      const delBtn = el.querySelector('.item-delete');
-      if (delBtn) delBtn.onclick = e => {
-        e.stopPropagation();
-        if (!confirm('Remove this item?')) return;
-        deleteItem(el);
-      };
-      const addRow = document.getElementById('add-row-' + sectionId);
-      list.insertBefore(el, addRow);
+      wireItemName(el);
+      el.appendChild(makeEditBtn(el));
+      el.appendChild(makeDeleteBtn(el));
+      list.insertBefore(el, document.getElementById('add-row-' + sectionId));
     });
 
     updateProgress();
