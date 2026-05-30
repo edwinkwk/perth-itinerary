@@ -364,6 +364,122 @@
     color: var(--terracotta);
   }
 
+  /* ── Section delete ── */
+  .section-right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .section-delete {
+    background: none;
+    border: none;
+    color: #ccc;
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0 2px;
+    opacity: 0;
+    transition: opacity 0.15s, color 0.15s;
+  }
+
+  .section-header:hover .section-delete { opacity: 1; }
+  .section-delete:hover { color: var(--terracotta); }
+  @media (hover: none) { .section-delete { opacity: 0.35; } }
+
+  /* ── Add section ── */
+  .add-section-area { margin-bottom: 20px; }
+
+  .add-section-btn {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    background: transparent;
+    border: 1.5px dashed #cdd8cf;
+    border-radius: 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+  }
+  .add-section-btn:hover { border-color: var(--forest); color: var(--forest); }
+
+  .add-section-form {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    padding: 12px 16px;
+    background: white;
+    border: 1.5px solid var(--forest);
+    border-radius: 14px;
+    box-shadow: 0 2px 12px rgba(30,44,36,0.07);
+  }
+
+  .add-section-icon-input {
+    width: 36px;
+    text-align: center;
+    border: 1.5px solid #cdd8cf;
+    border-radius: 6px;
+    padding: 6px 2px;
+    font-size: 16px;
+    outline: none;
+  }
+
+  .add-section-name-input {
+    flex: 1;
+    border: 1.5px solid #cdd8cf;
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    color: var(--dark);
+    outline: none;
+  }
+  .add-section-name-input:focus { border-color: var(--forest); }
+
+  /* ── Tags ── */
+  .who-tag { cursor: pointer; position: relative; }
+
+  .tag-remove {
+    opacity: 0;
+    font-size: 9px;
+    margin-left: 2px;
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+  .who-tag:hover .tag-remove { opacity: 1; }
+  @media (hover: none) { .tag-remove { opacity: 0.5; } }
+
+  .tag-add-btn {
+    background: none;
+    border: 1px dashed #cdd8cf;
+    border-radius: 10px;
+    padding: 2px 5px;
+    font-size: 10px;
+    color: var(--muted);
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.15s;
+    line-height: 1.4;
+  }
+  .item:hover .tag-add-btn { opacity: 1; }
+  @media (hover: none) { .tag-add-btn { opacity: 0.5; } }
+
+  .tag-input {
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid currentColor;
+    font-size: 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
+    color: inherit;
+    outline: none;
+    max-width: 80px;
+    min-width: 30px;
+  }
+
   .item-delete, .item-edit {
     background: none;
     border: none;
@@ -1279,6 +1395,17 @@
       </div>
     </div>
 
+    <div class="add-section-area" id="add-section-area">
+      <button id="add-section-btn" class="add-section-btn" onclick="showAddSectionForm()">+ Add section</button>
+      <div id="add-section-form" class="add-section-form" style="display:none">
+        <input id="add-section-icon" class="add-section-icon-input" placeholder="📋" maxlength="2" />
+        <input id="add-section-name" class="add-section-name-input" placeholder="Section name…"
+               onkeydown="if(event.key==='Enter')saveNewSection()" />
+        <button class="add-item-save" onclick="saveNewSection()">Add</button>
+        <button class="add-item-cancel" onclick="hideAddSectionForm()">×</button>
+      </div>
+    </div>
+
     <button class="reset-btn" onclick="resetAll()">↺ Reset all items</button>
 
   </div><!-- end tab-all -->
@@ -1340,57 +1467,189 @@
 </div>
 
 <script>
-  const GIST_ID = '8031e0e6608dfb221d196977430df86c';
+  const GIST_ID    = '8031e0e6608dfb221d196977430df86c';
   const GIST_TOKEN = ['github','pat','11BZJQASY0SBypVLoXvFKV_7nfN7DGsQ8Il9zxZjZPu809ADsGbWlM7j9cOsHaOvb9M7GNQUX2imOHY8Xa'].join('_');
-  const GIST_FILE = 'checklist-state.json';
-  const POLL_MS = 30000;
-  const SECTIONS = ['docs','adult-clothes','kids-clothes','toiletries','health','tech','kids-extras','margaret','perth','bags'];
+  const GIST_FILE  = 'checklist-state.json';
+  const POLL_MS    = 30000;
+  const SECTIONS   = ['docs','adult-clothes','kids-clothes','toiletries','health','tech','kids-extras','margaret','perth','bags'];
 
-  let saveTimer = null;
-  let lastEtag = null;
-  let baseItemKeys = [];
-  let baseItemSnapshots = []; // {key, sectionId, html}
+<script>
+  const GIST_ID    = '8031e0e6608dfb221d196977430df86c';
+  const GIST_TOKEN = ['github','pat','11BZJQASY0SBypVLoXvFKV_7nfN7DGsQ8Il9zxZjZPu809ADsGbWlM7j9cOsHaOvb9M7GNQUX2imOHY8Xa'].join('_');
+  const GIST_FILE  = 'checklist-state.json';
+  const POLL_MS    = 30000;
+  const SECTIONS   = ['docs','adult-clothes','kids-clothes','toiletries','health','tech','kids-extras','margaret','perth','bags'];
 
-  // ── Init ──────────────────────────────────────────────────────────────────
+  let saveTimer        = null;
+  let lastEtag         = null;
+  let baseItemKeys     = [];
+  let baseItemSnapshots = [];   // [{key, sectionId, html}]
+  let baseSectionMeta  = {};    // id → {title, iconOuterHTML}
+  let customSectionIds = [];
+
+  // ── Helpers ───────────────────────────────────────────────────────────────
+
+  function escHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function tagText(tagEl) {
+    // Text content of tag excluding the × remove span
+    return Array.from(tagEl.childNodes)
+      .filter(n => n.nodeType === Node.TEXT_NODE)
+      .map(n => n.textContent).join('').trim();
+  }
+
+  // ── Section init ──────────────────────────────────────────────────────────
+
+  function initSections() {
+    SECTIONS.forEach(id => {
+      const sec = document.getElementById('sec-' + id);
+      if (!sec) return;
+      baseSectionMeta[id] = {
+        title: sec.querySelector('.section-title')?.textContent || '',
+        iconOuterHTML: sec.querySelector('.section-icon')?.outerHTML || '<div class="section-icon">📋</div>'
+      };
+      addSectionDeleteBtn(sec, id);
+    });
+  }
+
+  function addSectionDeleteBtn(sec, id) {
+    if (sec.querySelector('.section-delete')) return;
+    const header = sec.querySelector('.section-header');
+    const chev   = sec.querySelector('.section-chevron');
+    // Wrap chevron + delete button in a right-side group
+    const group = document.createElement('div');
+    group.className = 'section-right';
+    chev.parentNode.insertBefore(group, chev);
+    group.appendChild(chev);
+    const btn = document.createElement('button');
+    btn.className = 'section-delete';
+    btn.title     = 'Remove section';
+    btn.textContent = '×';
+    btn.onclick = e => { e.stopPropagation(); deleteSection(id); };
+    group.appendChild(btn);
+  }
+
+  function makeAddItemRow(id) {
+    const row = document.createElement('div');
+    row.className = 'add-item-row';
+    row.id = 'add-row-' + id;
+    row.innerHTML =
+      `<button class="add-item-btn" onclick="showAddInput('${id}')">+ Add item</button>` +
+      `<div class="add-item-form" id="add-form-${id}" style="display:none">` +
+        `<input class="add-item-input" id="add-input-${id}" placeholder="Item name…" ` +
+               `onkeydown="if(event.key==='Enter')saveNewItem('${id}')" />` +
+        `<button class="add-item-save" onclick="saveNewItem('${id}')">Add</button>` +
+        `<button class="add-item-cancel" onclick="hideAddInput('${id}')">×</button>` +
+      `</div>`;
+    return row;
+  }
+
+  function createBaseSectionShell(id) {
+    const meta = baseSectionMeta[id];
+    if (!meta) return null;
+    const sec = document.createElement('div');
+    sec.className = 'section';
+    sec.id = 'sec-' + id;
+    sec.innerHTML =
+      `<div class="section-header" onclick="toggleSection('${id}')">` +
+        `<div class="section-title-row">` +
+          meta.iconOuterHTML +
+          `<div><div class="section-title">${escHtml(meta.title)}</div>` +
+          `<div class="section-count" id="count-${id}">0 / 0 packed</div></div>` +
+        `</div>` +
+        `<div class="section-chevron open" id="chev-${id}">▼</div>` +
+      `</div>` +
+      `<div class="items-list" id="list-${id}"></div>`;
+    addSectionDeleteBtn(sec, id);
+    sec.querySelector('.items-list').appendChild(makeAddItemRow(id));
+    return sec;
+  }
+
+  function createSectionEl(id, title, icon) {
+    const sec = document.createElement('div');
+    sec.className = 'section';
+    sec.id = 'sec-' + id;
+    sec.innerHTML =
+      `<div class="section-header" onclick="toggleSection('${id}')">` +
+        `<div class="section-title-row">` +
+          `<div class="section-icon">${escHtml(icon)}</div>` +
+          `<div><div class="section-title">${escHtml(title)}</div>` +
+          `<div class="section-count" id="count-${id}">0 / 0 packed</div></div>` +
+        `</div>` +
+        `<div class="section-chevron open" id="chev-${id}">▼</div>` +
+      `</div>` +
+      `<div class="items-list" id="list-${id}"></div>`;
+    addSectionDeleteBtn(sec, id);
+    sec.querySelector('.items-list').appendChild(makeAddItemRow(id));
+    return sec;
+  }
+
+  function deleteSection(id) {
+    const sec = document.getElementById('sec-' + id);
+    const title = sec?.querySelector('.section-title')?.textContent || 'this section';
+    if (!confirm(`Remove "${title}" and all its items? This will affect everyone.`)) return;
+    sec?.remove();
+    scheduleSave();
+    updateProgress();
+  }
+
+  function showAddSectionForm() {
+    document.getElementById('add-section-btn').style.display = 'none';
+    document.getElementById('add-section-form').style.display = 'flex';
+    document.getElementById('add-section-name').focus();
+  }
+
+  function hideAddSectionForm() {
+    document.getElementById('add-section-name').value = '';
+    document.getElementById('add-section-icon').value = '';
+    document.getElementById('add-section-form').style.display = 'none';
+    document.getElementById('add-section-btn').style.display = 'block';
+  }
+
+  function saveNewSection() {
+    const name = document.getElementById('add-section-name').value.trim();
+    if (!name) return;
+    const icon = document.getElementById('add-section-icon').value.trim() || '📋';
+    const id   = 's' + Date.now();
+    const sec  = createSectionEl(id, name, icon);
+    document.getElementById('add-section-area').before(sec);
+    customSectionIds.push(id);
+    hideAddSectionForm();
+    scheduleSave();
+  }
+
+  // ── Item init ─────────────────────────────────────────────────────────────
 
   function initItems() {
-    // Assign stable keys to all base items and inject delete buttons
     document.querySelectorAll('#tab-all .item').forEach((el, i) => {
       const key = 'b' + i;
       el.dataset.key = key;
       baseItemKeys.push(key);
       el.onclick = () => toggleItem(el);
       const sectionId = el.closest('.items-list')?.id.replace('list-', '');
-      baseItemSnapshots.push({ key, sectionId, html: el.outerHTML }); // snapshot before buttons
+      baseItemSnapshots.push({ key, sectionId, html: el.outerHTML });
       wireItemName(el);
       wireItemNote(el);
+      wireTags(el);
       el.appendChild(makeEditBtn(el));
       el.appendChild(makeDeleteBtn(el));
     });
 
-    // Inject "Add item" rows into each section
     SECTIONS.forEach(s => {
       const list = document.getElementById('list-' + s);
       if (!list) return;
-      const row = document.createElement('div');
-      row.className = 'add-item-row';
-      row.id = 'add-row-' + s;
-      row.innerHTML =
-        `<button class="add-item-btn" onclick="showAddInput('${s}')">+ Add item</button>` +
-        `<div class="add-item-form" id="add-form-${s}" style="display:none">` +
-          `<input class="add-item-input" id="add-input-${s}" placeholder="Item name…" ` +
-                 `onkeydown="if(event.key==='Enter')saveNewItem('${s}')" />` +
-          `<button class="add-item-save" onclick="saveNewItem('${s}')">Add</button>` +
-          `<button class="add-item-cancel" onclick="hideAddInput('${s}')">×</button>` +
-        `</div>`;
-      list.appendChild(row);
+      list.appendChild(makeAddItemRow(s));
     });
   }
 
+  // ── Item button factories ─────────────────────────────────────────────────
+
   function makeDeleteBtn(itemEl) {
     const btn = document.createElement('button');
-    btn.className = 'item-delete';
-    btn.title = 'Remove item';
+    btn.className   = 'item-delete';
+    btn.title       = 'Remove item';
     btn.textContent = '×';
     btn.onclick = e => {
       e.stopPropagation();
@@ -1402,12 +1661,14 @@
 
   function makeEditBtn(itemEl) {
     const btn = document.createElement('button');
-    btn.className = 'item-edit';
-    btn.title = 'Edit item';
+    btn.className   = 'item-edit';
+    btn.title       = 'Edit name';
     btn.textContent = '✎';
     btn.onclick = e => { e.stopPropagation(); startEditName(itemEl); };
     return btn;
   }
+
+  // ── Name editing ──────────────────────────────────────────────────────────
 
   function wireItemName(itemEl) {
     const nameEl = itemEl.querySelector('.item-name');
@@ -1422,23 +1683,24 @@
     input.className = 'item-name-input';
     input.value = original;
     nameEl.replaceWith(input);
-    input.focus();
-    input.select();
-    const finish = (save) => {
-      const newName = input.value.trim() || original;
-      const restored = document.createElement('div');
-      restored.className = 'item-name';
-      restored.textContent = save ? newName : original;
-      restored.ondblclick = e => { e.stopPropagation(); startEditName(itemEl); };
-      input.replaceWith(restored);
-      if (save && newName !== original) scheduleSave();
+    input.focus(); input.select();
+    const finish = save => {
+      const val = input.value.trim() || original;
+      const div = document.createElement('div');
+      div.className = 'item-name';
+      div.textContent = save ? val : original;
+      div.ondblclick = e => { e.stopPropagation(); startEditName(itemEl); };
+      input.replaceWith(div);
+      if (save && val !== original) scheduleSave();
     };
-    input.onblur  = () => finish(true);
+    input.onblur    = () => finish(true);
     input.onkeydown = e => {
       if (e.key === 'Enter')  { e.preventDefault(); input.blur(); }
       if (e.key === 'Escape') { input.value = original; input.blur(); }
     };
   }
+
+  // ── Note editing ──────────────────────────────────────────────────────────
 
   function wireItemNote(itemEl) {
     const noteEl = itemEl.querySelector('.item-note');
@@ -1447,7 +1709,7 @@
     } else {
       if (itemEl.querySelector('.item-add-note')) return;
       const ph = document.createElement('div');
-      ph.className = 'item-add-note';
+      ph.className   = 'item-add-note';
       ph.textContent = '+ note';
       ph.onclick = e => { e.stopPropagation(); startEditNote(itemEl); };
       itemEl.querySelector('.item-text').appendChild(ph);
@@ -1456,78 +1718,134 @@
 
   function startEditNote(itemEl) {
     if (itemEl.querySelector('.item-note-input')) return;
-    const textEl = itemEl.querySelector('.item-text');
-    const noteEl  = itemEl.querySelector('.item-note');
-    const ph      = itemEl.querySelector('.item-add-note');
+    const textEl   = itemEl.querySelector('.item-text');
+    const noteEl   = itemEl.querySelector('.item-note');
+    const ph       = itemEl.querySelector('.item-add-note');
     const original = noteEl?.textContent || '';
-
     const input = document.createElement('input');
-    input.className = 'item-note-input';
-    input.value = original;
+    input.className   = 'item-note-input';
+    input.value       = original;
     input.placeholder = 'Add a note…';
     input.onclick = e => e.stopPropagation();
-
     if (noteEl) noteEl.replaceWith(input);
     else if (ph) ph.replaceWith(input);
     else textEl.appendChild(input);
     input.focus();
-
-    const finish = (save) => {
-      const newNote = input.value.trim();
+    const finish = save => {
+      const val = input.value.trim();
       input.remove();
-      // Clear any leftover note/placeholder before re-wiring
       itemEl.querySelector('.item-note')?.remove();
       itemEl.querySelector('.item-add-note')?.remove();
-
-      if (save && newNote) {
-        const el = document.createElement('div');
-        el.className = 'item-note';
-        el.textContent = newNote;
-        textEl.appendChild(el);
-        if (save && newNote !== original) scheduleSave();
+      if (save && val) {
+        const div = document.createElement('div');
+        div.className = 'item-note'; div.textContent = val;
+        textEl.appendChild(div);
+        if (val !== original) scheduleSave();
       } else if (!save && original) {
-        const el = document.createElement('div');
-        el.className = 'item-note';
-        el.textContent = original;
-        textEl.appendChild(el);
-      } else if (save && !newNote && original) {
-        scheduleSave(); // note was deleted
+        const div = document.createElement('div');
+        div.className = 'item-note'; div.textContent = original;
+        textEl.appendChild(div);
+      } else if (save && !val && original) {
+        scheduleSave();
       }
       wireItemNote(itemEl);
     };
-
-    input.onblur   = () => finish(true);
+    input.onblur    = () => finish(true);
     input.onkeydown = e => {
       if (e.key === 'Enter')  { e.preventDefault(); input.blur(); }
       if (e.key === 'Escape') { input.value = original; finish(false); }
     };
   }
 
+  // ── Tag editing ───────────────────────────────────────────────────────────
+
+  function wireTags(itemEl) {
+    let whoDiv = itemEl.querySelector('.item-who');
+    if (!whoDiv) {
+      whoDiv = document.createElement('div');
+      whoDiv.className = 'item-who';
+      itemEl.querySelector('.item-text').after(whoDiv);
+    }
+    whoDiv.querySelectorAll('.who-tag').forEach(t => wireTag(t, itemEl));
+    if (!whoDiv.querySelector('.tag-add-btn')) {
+      const btn = document.createElement('button');
+      btn.className   = 'tag-add-btn';
+      btn.textContent = '+';
+      btn.title       = 'Add tag';
+      btn.onclick = e => { e.stopPropagation(); addTag(itemEl); };
+      whoDiv.appendChild(btn);
+    }
+  }
+
+  function wireTag(tagEl, itemEl) {
+    tagEl.onclick = e => { e.stopPropagation(); startEditTag(tagEl, itemEl); };
+    if (!tagEl.querySelector('.tag-remove')) {
+      const rm = document.createElement('span');
+      rm.className   = 'tag-remove';
+      rm.textContent = ' ×';
+      rm.onclick = e => { e.stopPropagation(); tagEl.remove(); scheduleSave(); };
+      tagEl.appendChild(rm);
+    }
+  }
+
+  function startEditTag(tagEl, itemEl) {
+    if (tagEl.querySelector('input')) return;
+    const original = tagText(tagEl);
+    const input = document.createElement('input');
+    input.className = 'tag-input';
+    input.value     = original;
+    input.style.width = Math.max(30, original.length * 8) + 'px';
+    tagEl.innerHTML = '';
+    tagEl.appendChild(input);
+    input.focus(); input.select();
+    const finish = save => {
+      const val = input.value.trim() || original;
+      tagEl.innerHTML = '';
+      tagEl.appendChild(document.createTextNode(save ? val : original));
+      const rm = document.createElement('span');
+      rm.className   = 'tag-remove';
+      rm.textContent = ' ×';
+      rm.onclick = e => { e.stopPropagation(); tagEl.remove(); scheduleSave(); };
+      tagEl.appendChild(rm);
+      tagEl.onclick = e => { e.stopPropagation(); startEditTag(tagEl, itemEl); };
+      if (save && val !== original) scheduleSave();
+    };
+    input.onblur    = () => finish(true);
+    input.onkeydown = e => {
+      if (e.key === 'Enter')  { e.preventDefault(); input.blur(); }
+      if (e.key === 'Escape') { input.value = original; finish(false); }
+    };
+  }
+
+  function addTag(itemEl) {
+    const whoDiv = itemEl.querySelector('.item-who');
+    if (!whoDiv) return;
+    const tag = document.createElement('span');
+    tag.className = 'who-tag who-all';
+    whoDiv.insertBefore(tag, whoDiv.querySelector('.tag-add-btn'));
+    wireTag(tag, itemEl);
+    startEditTag(tag, itemEl);
+  }
+
+  // ── Add / remove items ────────────────────────────────────────────────────
+
   function makeItemEl(key, name) {
     const el = document.createElement('div');
-    el.className = 'item';
-    el.dataset.key = key;
+    el.className    = 'item';
+    el.dataset.key  = key;
     el.onclick = () => toggleItem(el);
     el.innerHTML =
       `<div class="checkbox"><span class="checkmark">✓</span></div>` +
       `<div class="item-text"><div class="item-name">${escHtml(name)}</div></div>`;
-    wireItemName(el);
-    wireItemNote(el);
+    wireItemName(el); wireItemNote(el); wireTags(el);
     el.appendChild(makeEditBtn(el));
     el.appendChild(makeDeleteBtn(el));
     return el;
   }
 
-  function escHtml(s) {
-    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  }
-
-  // ── Add / remove ──────────────────────────────────────────────────────────
-
   function showAddInput(s) {
     document.querySelector('#add-row-' + s + ' .add-item-btn').style.display = 'none';
-    const form = document.getElementById('add-form-' + s);
-    form.style.display = 'flex';
+    document.getElementById('add-form-' + s).style.display = 'flex';
     document.getElementById('add-input-' + s).focus();
   }
 
@@ -1539,33 +1857,54 @@
 
   function saveNewItem(s) {
     const input = document.getElementById('add-input-' + s);
-    const name = input.value.trim();
+    const name  = input.value.trim();
     if (!name) return;
-    const key = 'c' + Date.now();
+    const key  = 'c' + Date.now();
     const list = document.getElementById('list-' + s);
-    const addRow = document.getElementById('add-row-' + s);
-    list.insertBefore(makeItemEl(key, name), addRow);
+    list.insertBefore(makeItemEl(key, name), document.getElementById('add-row-' + s));
     hideAddInput(s);
-    scheduleSave();
-    updateProgress();
+    scheduleSave(); updateProgress();
   }
 
   function deleteItem(el) {
     el.remove();
-    scheduleSave();
-    updateProgress();
+    scheduleSave(); updateProgress();
   }
 
   // ── State ─────────────────────────────────────────────────────────────────
 
   function currentState() {
-    const checked = {}, removed = [], custom = [], names = {}, notes = {};
+    const checked = {}, removed = [], custom = [], names = {}, notes = {}, tags = {};
+    const removedSections = [], customSections = [];
+
     document.querySelectorAll('#tab-all .item').forEach(el => {
       const k = el.dataset.key;
       if (!k) return;
       if (el.classList.contains('checked')) checked[k] = 1;
       const nameText = el.querySelector('.item-name')?.textContent || '';
       const noteText = el.querySelector('.item-note')?.textContent || '';
+
+      // Tags — store only if changed from original
+      const whoDiv = el.querySelector('.item-who');
+      if (whoDiv) {
+        const tagList = Array.from(whoDiv.querySelectorAll('.who-tag')).map(t => ({
+          text: tagText(t), cls: t.className.replace('who-tag','').trim()
+        }));
+        if (k.startsWith('c')) {
+          if (tagList.length) tags[k] = tagList;
+        } else {
+          const snap = baseItemSnapshots.find(s => s.key === k);
+          if (snap) {
+            const tmp = document.createElement('div');
+            tmp.innerHTML = snap.html;
+            const orig = Array.from(tmp.querySelectorAll('.who-tag')).map(t => ({
+              text: t.textContent.trim(), cls: t.className.replace('who-tag','').trim()
+            }));
+            if (JSON.stringify(tagList) !== JSON.stringify(orig)) tags[k] = tagList;
+          }
+        }
+      }
+
       if (k.startsWith('c')) {
         const section = el.closest('.items-list')?.id.replace('list-', '');
         custom.push({ id: k, section, name: nameText, note: noteText });
@@ -1579,66 +1918,127 @@
         }
       }
     });
+
     baseItemKeys.forEach(k => {
       if (!document.querySelector(`[data-key="${k}"]`)) removed.push(k);
     });
-    return { checked, removed, custom, names, notes };
+
+    SECTIONS.forEach(id => {
+      if (!document.getElementById('sec-' + id)) removedSections.push(id);
+    });
+
+    customSectionIds.filter(id => document.getElementById('sec-' + id)).forEach(id => {
+      const sec = document.getElementById('sec-' + id);
+      customSections.push({
+        id,
+        title: sec.querySelector('.section-title')?.textContent || '',
+        icon:  sec.querySelector('.section-icon')?.textContent?.trim() || '📋'
+      });
+    });
+
+    return { checked, removed, custom, names, notes, tags, removedSections, customSections };
   }
 
   function applyState(state) {
-    // Legacy format (flat index map from before add/remove feature)
     if (!state.checked && !state.custom && !state.removed) {
+      // Legacy format
       document.querySelectorAll('#tab-all .item').forEach((el, i) => {
         el.classList.toggle('checked', !!state[i]);
       });
-      updateProgress();
-      return;
+      updateProgress(); return;
     }
 
-    const { checked = {}, removed = [], custom = [], names = {}, notes = {} } = state;
+    const { checked = {}, removed = [], custom = [], names = {}, notes = {}, tags = {},
+            removedSections = [], customSections = [] } = state;
 
-    // Hide removed base items
-    removed.forEach(k => {
-      const el = document.querySelector(`#tab-all [data-key="${k}"]`);
-      if (el) el.remove();
+    // Sections: remove
+    removedSections.forEach(id => document.getElementById('sec-' + id)?.remove());
+
+    // Sections: restore base ones that came back (e.g. after a remote reset)
+    SECTIONS.forEach(id => {
+      if (!document.getElementById('sec-' + id) && !removedSections.includes(id)) {
+        const shell = createBaseSectionShell(id);
+        if (shell) document.getElementById('add-section-area').before(shell);
+      }
     });
 
-    // Render custom items (skip if already in DOM)
+    // Sections: render new custom ones
+    customSections.forEach(({ id, title, icon }) => {
+      if (document.getElementById('sec-' + id)) return;
+      const sec = createSectionEl(id, title, icon);
+      document.getElementById('add-section-area').before(sec);
+      if (!customSectionIds.includes(id)) customSectionIds.push(id);
+    });
+
+    // Items: remove
+    removed.forEach(k => document.querySelector(`#tab-all [data-key="${k}"]`)?.remove());
+
+    // Items: restore base ones that came back
+    baseItemSnapshots.forEach(({ key, sectionId, html }) => {
+      if (removed.includes(key) || document.querySelector(`[data-key="${key}"]`)) return;
+      const list = document.getElementById('list-' + sectionId);
+      if (!list) return;
+      const tmp = document.createElement('div');
+      tmp.innerHTML = html;
+      const el = tmp.firstElementChild;
+      el.onclick = () => toggleItem(el);
+      wireItemName(el); wireItemNote(el); wireTags(el);
+      el.appendChild(makeEditBtn(el)); el.appendChild(makeDeleteBtn(el));
+      list.insertBefore(el, document.getElementById('add-row-' + sectionId));
+    });
+
+    // Items: render custom
     custom.forEach(({ id, section, name, note }) => {
       if (document.querySelector(`[data-key="${id}"]`)) return;
       const list = document.getElementById('list-' + section);
       if (!list) return;
       const el = makeItemEl(id, name);
       if (note) {
-        const noteEl = document.createElement('div');
-        noteEl.className = 'item-note';
-        noteEl.textContent = note;
-        el.querySelector('.item-text').appendChild(noteEl);
+        el.querySelector('.item-add-note')?.remove();
+        const div = document.createElement('div');
+        div.className = 'item-note'; div.textContent = note;
+        el.querySelector('.item-text').appendChild(div);
         wireItemNote(el);
       }
       list.insertBefore(el, document.getElementById('add-row-' + section));
     });
 
-    // Apply checked state and any renamed base items
+    // Apply per-item state
     document.querySelectorAll('#tab-all .item').forEach(el => {
       const k = el.dataset.key;
       if (!k) return;
       el.classList.toggle('checked', !!checked[k]);
+
       if (names[k] !== undefined) {
         const nameEl = el.querySelector('.item-name');
         if (nameEl && !el.querySelector('.item-name-input')) nameEl.textContent = names[k];
       }
+
       if (notes[k] !== undefined && !el.querySelector('.item-note-input')) {
         const textEl = el.querySelector('.item-text');
         el.querySelector('.item-note')?.remove();
         el.querySelector('.item-add-note')?.remove();
         if (notes[k]) {
-          const noteEl = document.createElement('div');
-          noteEl.className = 'item-note';
-          noteEl.textContent = notes[k];
-          textEl.appendChild(noteEl);
+          const div = document.createElement('div');
+          div.className = 'item-note'; div.textContent = notes[k];
+          textEl.appendChild(div);
         }
         wireItemNote(el);
+      }
+
+      if (tags[k] && !el.querySelector('.tag-input')) {
+        const whoDiv = el.querySelector('.item-who');
+        if (whoDiv) {
+          const addBtn = whoDiv.querySelector('.tag-add-btn');
+          whoDiv.querySelectorAll('.who-tag').forEach(t => t.remove());
+          tags[k].forEach(({ text, cls }) => {
+            const tag = document.createElement('span');
+            tag.className = 'who-tag ' + (cls || 'who-all');
+            tag.textContent = text;
+            whoDiv.insertBefore(tag, addBtn);
+            wireTag(tag, el);
+          });
+        }
       }
     });
 
@@ -1663,10 +2063,7 @@
       lastEtag = res.headers.get('etag');
       const data = await res.json();
       return JSON.parse(data.files[GIST_FILE].content || '{}');
-    } catch (e) {
-      setStatus('⚠ sync error', 'error');
-      return null;
-    }
+    } catch (e) { setStatus('⚠ sync error', 'error'); return null; }
   }
 
   async function pushState(state) {
@@ -1680,9 +2077,7 @@
       lastEtag = null;
       setStatus('✓ synced', 'ok');
       setTimeout(() => setStatus(''), 2000);
-    } catch (e) {
-      setStatus('⚠ sync error', 'error');
-    }
+    } catch (e) { setStatus('⚠ sync error', 'error'); }
   }
 
   function scheduleSave() {
@@ -1702,39 +2097,35 @@
   function toggleSection(id) {
     const list = document.getElementById('list-' + id);
     const chev = document.getElementById('chev-' + id);
+    if (!list) return;
     if (list.style.display === 'none') {
-      list.style.display = 'block';
-      chev.textContent = '▼';
-      chev.classList.add('open');
+      list.style.display = 'block'; chev.classList.add('open');
     } else {
-      list.style.display = 'none';
-      chev.textContent = '▼';
-      chev.classList.remove('open');
+      list.style.display = 'none'; chev.classList.remove('open');
     }
+    chev.textContent = '▼';
   }
 
   function toggleItem(el) {
     el.classList.toggle('checked');
-    scheduleSave();
-    updateProgress();
+    scheduleSave(); updateProgress();
   }
 
   function updateProgress() {
-    const allItems = document.querySelectorAll('#tab-all .item');
-    const done = document.querySelectorAll('#tab-all .item.checked').length;
-    const total = allItems.length;
-    const pct = total ? Math.round((done / total) * 100) : 0;
+    const done  = document.querySelectorAll('#tab-all .item.checked').length;
+    const total = document.querySelectorAll('#tab-all .item').length;
+    const pct   = total ? Math.round((done / total) * 100) : 0;
     document.getElementById('progress-fill').style.width = pct + '%';
     document.getElementById('progress-text').textContent = done + ' / ' + total;
-
-    SECTIONS.forEach(s => {
-      const list = document.getElementById('list-' + s);
-      if (!list) return;
-      const countEl = document.getElementById('count-' + s);
-      if (!countEl) return;
-      const items = list.querySelectorAll('.item');
-      const chk = list.querySelectorAll('.item.checked');
-      countEl.textContent = chk.length + ' / ' + items.length + ' packed';
+    // Update counts for all visible sections (base + custom)
+    document.querySelectorAll('#tab-all .section').forEach(sec => {
+      const id      = sec.id.replace('sec-', '');
+      const list    = document.getElementById('list-' + id);
+      const countEl = document.getElementById('count-' + id);
+      if (!list || !countEl) return;
+      countEl.textContent =
+        list.querySelectorAll('.item.checked').length + ' / ' +
+        list.querySelectorAll('.item').length + ' packed';
     });
   }
 
@@ -1746,16 +2137,20 @@
   }
 
   async function resetAll() {
-    if (!confirm('Reset all items? This will restore deleted items, remove added items, and uncheck everything for everyone.')) return;
+    if (!confirm('Reset everything? This will restore deleted sections and items, remove added ones, clear all edits, and uncheck everything — for everyone.')) return;
 
-    // Remove all current items from every section
-    SECTIONS.forEach(s => {
-      const list = document.getElementById('list-' + s);
-      if (!list) return;
-      list.querySelectorAll('.item').forEach(el => el.remove());
+    // Remove all sections
+    document.querySelectorAll('#tab-all .section').forEach(s => s.remove());
+    customSectionIds = [];
+
+    // Restore base sections in original order
+    const area = document.getElementById('add-section-area');
+    SECTIONS.forEach(id => {
+      const shell = createBaseSectionShell(id);
+      if (shell) area.before(shell);
     });
 
-    // Re-insert base items from snapshots (snapshots have no buttons; re-wire everything)
+    // Re-insert base items from snapshots
     baseItemSnapshots.forEach(({ key, sectionId, html }) => {
       const list = document.getElementById('list-' + sectionId);
       if (!list) return;
@@ -1765,19 +2160,18 @@
       el.dataset.key = key;
       el.classList.remove('checked');
       el.onclick = () => toggleItem(el);
-      wireItemName(el);
-      wireItemNote(el);
-      el.appendChild(makeEditBtn(el));
-      el.appendChild(makeDeleteBtn(el));
+      wireItemName(el); wireItemNote(el); wireTags(el);
+      el.appendChild(makeEditBtn(el)); el.appendChild(makeDeleteBtn(el));
       list.insertBefore(el, document.getElementById('add-row-' + sectionId));
     });
 
     updateProgress();
-    await pushState({ checked: {}, removed: [], custom: [] });
+    await pushState({ checked:{}, removed:[], custom:[], names:{}, notes:{}, tags:{}, removedSections:[], customSections:[] });
   }
 
   // ── Boot ──────────────────────────────────────────────────────────────────
 
+  initSections();
   initItems();
   setStatus('loading…', 'syncing');
   fetchState().then(state => {
