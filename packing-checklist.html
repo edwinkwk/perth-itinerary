@@ -2146,6 +2146,7 @@
   fetchState().then(state => {
     if (state) applyState(state);
     else updateProgress();
+    setStatus('');
     setTimeout(poll, POLL_MS);
   });
 </script>
