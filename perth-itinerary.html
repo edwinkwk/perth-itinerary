@@ -18,7 +18,39 @@
 <body>
   <div id="root"></div>
   <script type="text/babel">
-    const { useState } = React;
+    const { useState, useEffect } = React;
+
+    // ── Open-Meteo helpers ────────────────────────────────────────────────────
+    function wmoEmoji(c) {
+      if (c === 0)  return "☀";
+      if (c <= 2)   return "🌤";
+      if (c === 3)  return "☁";
+      if (c <= 48)  return "🌫";
+      if (c <= 55)  return "🌦";
+      if (c <= 65)  return "🌧";
+      if (c <= 67)  return "🌨";
+      if (c <= 77)  return "❄";
+      if (c <= 82)  return "🌦";
+      if (c <= 86)  return "🌨";
+      return "⛈";
+    }
+    function wmoCondition(c) {
+      if (c === 0)  return "Clear";
+      if (c <= 2)   return "Mostly Sunny";
+      if (c === 3)  return "Overcast";
+      if (c <= 48)  return "Foggy";
+      if (c <= 55)  return "Drizzle";
+      if (c <= 65)  return "Rain";
+      if (c <= 77)  return "Sleet/Snow";
+      if (c <= 82)  return "Showers";
+      if (c <= 86)  return "Snow Showers";
+      return "Thunderstorm";
+    }
+    function mmToRain(mm) {
+      if (mm < 1)  return "Low";
+      if (mm < 10) return "Medium";
+      return "High";
+    }
 
     const trip = {
       title: "Perth & Margaret River",
@@ -160,17 +192,32 @@
       homebound: "✈ Homebound",
     };
 
-    const weatherCondition = (icon) => {
-      if (icon === "☀") return "Clear";
-      if (icon === "🌤") return "Mostly Sunny";
-      if (icon === "⛅") return "Partly Cloudy";
-      if (icon === "☁") return "Overcast";
-      if (icon === "🌦") return "Light Rain";
-      return "Mixed";
-    };
-
     function App() {
       const [selected, setSelected] = useState(null);
+      const [wx, setWx] = useState(null); // wx[i] = { weatherIcon, wmoCode, high, low, rain }
+
+      useEffect(() => {
+        const BASE = 'https://api.open-meteo.com/v1/forecast?daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_sum&timezone=Australia%2FPerth&start_date=2026-06-02&end_date=2026-06-11';
+        Promise.all([
+          fetch(BASE + '&latitude=-33.9536&longitude=115.0752').then(r => r.json()), // Margaret River
+          fetch(BASE + '&latitude=-31.9505&longitude=115.8605').then(r => r.json()), // Perth
+        ]).then(([mr, pt]) => {
+          const map = {};
+          trip.days.forEach((day, i) => {
+            // Use Perth data for perth/homebound phases, Margaret River for all others
+            const data = (day.phase === 'perth' || day.phase === 'homebound') ? pt : mr;
+            const code = data.daily.weathercode[i];
+            map[i] = {
+              weatherIcon: wmoEmoji(code),
+              wmoCode:     code,
+              high:        Math.round(data.daily.temperature_2m_max[i]),
+              low:         Math.round(data.daily.temperature_2m_min[i]),
+              rain:        mmToRain(data.daily.precipitation_sum[i]),
+            };
+          });
+          setWx(map);
+        }).catch(e => console.warn('Weather fetch failed, using static data', e));
+      }, []);
 
       return (
         <div style={{
@@ -246,6 +293,13 @@
             {trip.days.map((day, i) => {
               const c = phaseColors[day.phase];
               const isOpen = selected === i;
+              // Overlay live weather data when available
+              const wxDay      = wx?.[i];
+              const wIcon      = wxDay?.weatherIcon ?? day.weatherIcon;
+              const wHigh      = wxDay?.high        ?? day.high;
+              const wLow       = wxDay?.low         ?? day.low;
+              const wRain      = wxDay?.rain        ?? day.rain;
+              const wCondition = wxDay ? wmoCondition(wxDay.wmoCode) : "—";
               return (
                 <div key={i} onClick={() => setSelected(isOpen ? null : i)} style={{
                   background: `linear-gradient(145deg, ${c.bg} 0%, #0d1420 100%)`,
@@ -274,9 +328,9 @@
                     </div>
                     {/* Weather badge */}
                     <div style={{ background: "#0d1a28", border: `1px solid ${c.badge}`, borderRadius: 12, padding: "6px 10px", textAlign: "center", minWidth: 64 }}>
-                      <div style={{ fontSize: 20, lineHeight: 1 }}>{day.weatherIcon}</div>
-                      <div style={{ fontSize: 11, color: c.text, fontFamily: "sans-serif", marginTop: 3 }}>{day.high}° / {day.low}°</div>
-                      <div style={{ fontSize: 9, color: "#6a7a8a", fontFamily: "sans-serif" }}>{weatherCondition(day.weatherIcon)}</div>
+                      <div style={{ fontSize: 20, lineHeight: 1 }}>{wIcon}</div>
+                      <div style={{ fontSize: 11, color: c.text, fontFamily: "sans-serif", marginTop: 3 }}>{wHigh}° / {wLow}°</div>
+                      <div style={{ fontSize: 9, color: "#6a7a8a", fontFamily: "sans-serif" }}>{wCondition}</div>
                     </div>
                   </div>
 
@@ -315,9 +369,9 @@
                   <div style={{ display: "flex", gap: 4, alignItems: "center", marginTop: 10 }}>
                     <span style={{ fontSize: 10, color: "#5a6878", fontFamily: "sans-serif" }}>Rain:</span>
                     {["Low", "Medium", "High"].map(r => (
-                      <div key={r} style={{ width: 18, height: 4, borderRadius: 2, background: day.rain === r ? (r === "Low" ? "#4a9a4a" : r === "Medium" ? "#d4a04a" : "#9a2a2a") : "#1a2a3a" }} />
+                      <div key={r} style={{ width: 18, height: 4, borderRadius: 2, background: wRain === r ? (r === "Low" ? "#4a9a4a" : r === "Medium" ? "#d4a04a" : "#9a2a2a") : "#1a2a3a" }} />
                     ))}
-                    <span style={{ fontSize: 10, color: "#8a9ab0", fontFamily: "sans-serif" }}>{day.rain}</span>
+                    <span style={{ fontSize: 10, color: "#8a9ab0", fontFamily: "sans-serif" }}>{wRain}</span>
                   </div>
                 </div>
               );
@@ -332,14 +386,19 @@
               </div>
               <div style={{ display: "flex", gap: 0, overflowX: "auto" }}>
                 {trip.days.map((d, i) => {
-                  const c = phaseColors[d.phase];
+                  const c    = phaseColors[d.phase];
+                  const wxD  = wx?.[i];
+                  const icon = wxD?.weatherIcon ?? d.weatherIcon;
+                  const hi   = wxD?.high        ?? d.high;
+                  const lo   = wxD?.low         ?? d.low;
+                  const rain = wxD?.rain        ?? d.rain;
                   return (
                     <div key={i} style={{ flex: "1 0 80px", textAlign: "center", padding: "12px 6px", borderRight: i < trip.days.length - 1 ? "1px solid #1a2a40" : "none", background: i % 2 === 0 ? "transparent" : "#0a1018" }}>
                       <div style={{ fontSize: 10, color: "#4a6080", fontFamily: "sans-serif", marginBottom: 4 }}>{d.date.split(",")[0]}</div>
-                      <div style={{ fontSize: 22, marginBottom: 4 }}>{d.weatherIcon}</div>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: c.accent, fontFamily: "sans-serif" }}>{d.high}°</div>
-                      <div style={{ fontSize: 11, color: "#4a6080", fontFamily: "sans-serif" }}>{d.low}°</div>
-                      <div style={{ width: 6, height: 6, borderRadius: "50%", margin: "6px auto 0", background: d.rain === "Low" ? "#4a9a4a" : d.rain === "Medium" ? "#d4a04a" : "#9a2a2a" }} />
+                      <div style={{ fontSize: 22, marginBottom: 4 }}>{icon}</div>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: c.accent, fontFamily: "sans-serif" }}>{hi}°</div>
+                      <div style={{ fontSize: 11, color: "#4a6080", fontFamily: "sans-serif" }}>{lo}°</div>
+                      <div style={{ width: 6, height: 6, borderRadius: "50%", margin: "6px auto 0", background: rain === "Low" ? "#4a9a4a" : rain === "Medium" ? "#d4a04a" : "#9a2a2a" }} />
                     </div>
                   );
                 })}
@@ -369,7 +428,7 @@
 
           {/* Footer */}
           <div style={{ textAlign: "center", marginTop: 20, fontSize: 11, color: "#3a4a5a", fontFamily: "sans-serif", letterSpacing: 1 }}>
-            Weather based on historical averages for Perth, WA in early June · Click any day card to expand details · Have an amazing trip! 🌿
+            {wx ? "🌐 Live forecast via Open-Meteo" : "⏳ Loading live weather…"} · Click any day card to expand · Have an amazing trip! 🌿
           </div>
         </div>
       );

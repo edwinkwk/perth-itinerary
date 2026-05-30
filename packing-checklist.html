@@ -1032,7 +1032,7 @@
           <div class="weather-header-sub">Cool, windy & showery. Layers essential.</div>
         </div>
       </div>
-      <div class="weather-days">
+      <div class="weather-days" id="wdays-margaret">
         <div class="weather-day">
           <div class="wd-name">Tue</div>
           <div class="wd-date">2 Jun</div>
@@ -1074,7 +1074,7 @@
           <div class="wd-rain">Rain</div>
         </div>
       </div>
-      <div class="weather-note">🌬️ Westerly winds 8–10 m/s · Humidity ~71% · Feels like 11–13°C · Sea 20°C · Based on June climatological averages</div>
+      <div class="weather-note" id="wnote-margaret">🌬️ Westerly winds 8–10 m/s · Humidity ~71% · Feels like 11–13°C · Sea 20°C · Based on June climatological averages</div>
     </div>
 
     <!-- WEATHER: PERTH -->
@@ -1083,10 +1083,10 @@
         <div class="weather-header-icon">🏙️</div>
         <div>
           <div class="weather-header-title">Perth City — 6 to 11 June</div>
-          <div class="weather-header-sub">Mild & mostly fine, some rain. More sunshine than Margaret River.</div>
+          <div class="weather-header-sub" id="wsub-perth">Mild & mostly fine, some rain. More sunshine than Margaret River.</div>
         </div>
       </div>
-      <div class="weather-days" style="grid-template-columns: repeat(6, 1fr);">
+      <div class="weather-days" id="wdays-perth" style="grid-template-columns: repeat(6, 1fr);">
         <div class="weather-day">
           <div class="wd-name">Sat</div>
           <div class="wd-date">6 Jun</div>
@@ -1136,7 +1136,7 @@
           <div class="wd-rain">Rain</div>
         </div>
       </div>
-      <div class="weather-note">🌬️ NE winds 6–7 m/s · Humidity ~72% · Feels like 11–12°C · 7 hrs sunshine/day avg · Based on June climatological averages</div>
+      <div class="weather-note" id="wnote-perth">🌬️ NE winds 6–7 m/s · Humidity ~72% · Feels like 11–12°C · 7 hrs sunshine/day avg · Based on June climatological averages</div>
     </div>
 
     <!-- DOCUMENTS -->
@@ -2149,6 +2149,85 @@
     setStatus('');
     setTimeout(poll, POLL_MS);
   });
+  loadWeather();
+
+  // ── Live Weather (Open-Meteo) ─────────────────────────────────────────────
+  async function loadWeather() {
+    const DAY_ABBR = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    const MON_ABBR = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+    function wmoEmoji(c) {
+      if (c === 0)  return '☀️';
+      if (c <= 2)   return '🌤️';
+      if (c === 3)  return '☁️';
+      if (c <= 48)  return '🌫️';
+      if (c <= 55)  return '🌦️';
+      if (c <= 65)  return '🌧️';
+      if (c <= 67)  return '🌨️';
+      if (c <= 77)  return '❄️';
+      if (c <= 82)  return '🌦️';
+      if (c <= 86)  return '🌨️';
+      return '⛈️';
+    }
+
+    function rainText(mm) {
+      if (mm < 0.5) return 'Dry';
+      if (mm < 3)   return 'Light';
+      if (mm < 10)  return 'Showers';
+      return 'Rain';
+    }
+
+    function renderDays(containerId, data, startDate, endDate) {
+      const el = document.getElementById(containerId);
+      if (!el || !data?.daily?.time) return;
+      const times = data.daily.time;
+      const i0 = times.indexOf(startDate);
+      const i1 = times.indexOf(endDate);
+      if (i0 === -1 || i1 === -1) return;
+      let html = '';
+      for (let i = i0; i <= i1; i++) {
+        const d   = new Date(times[i] + 'T12:00:00');
+        const day = DAY_ABBR[d.getDay()];
+        const dt  = d.getDate() + ' ' + MON_ABBR[d.getMonth()];
+        const icon = wmoEmoji(data.daily.weathercode[i]);
+        const hi   = Math.round(data.daily.temperature_2m_max[i]);
+        const lo   = Math.round(data.daily.temperature_2m_min[i]);
+        const rain = rainText(data.daily.precipitation_sum[i]);
+        html += `<div class="weather-day">
+          <div class="wd-name">${day}</div>
+          <div class="wd-date">${dt}</div>
+          <div class="wd-icon">${icon}</div>
+          <div class="wd-high">${hi}°C</div>
+          <div class="wd-low">${lo}°C</div>
+          <div class="wd-rain">${rain}</div>
+        </div>`;
+      }
+      el.innerHTML = html;
+    }
+
+    try {
+      const BASE = 'https://api.open-meteo.com/v1/forecast?daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_sum&timezone=Australia%2FPerth&start_date=2026-06-02&end_date=2026-06-11';
+      const [mr, pt] = await Promise.all([
+        fetch(BASE + '&latitude=-33.9536&longitude=115.0752').then(r => r.json()),
+        fetch(BASE + '&latitude=-31.9505&longitude=115.8605').then(r => r.json()),
+      ]);
+
+      renderDays('wdays-margaret', mr, '2026-06-02', '2026-06-06');
+      renderDays('wdays-perth',    pt, '2026-06-06', '2026-06-11');
+
+      const ts = new Date().toLocaleString('en-AU', {
+        timeZone: 'Australia/Perth', month: 'short', day: 'numeric',
+        hour: '2-digit', minute: '2-digit'
+      });
+      const note = `🌐 Live forecast · Updated ${ts} AWST · Open-Meteo`;
+      const mn = document.getElementById('wnote-margaret');
+      const pn = document.getElementById('wnote-perth');
+      if (mn) mn.textContent = note;
+      if (pn) pn.textContent = note;
+    } catch (e) {
+      console.warn('Weather fetch failed, using static data', e);
+    }
+  }
 </script>
 </body>
 </html>
