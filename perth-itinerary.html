@@ -480,7 +480,7 @@
           const map = {};
           trip.days.forEach((day, i) => {
             const data = (day.phase === 'perth' || day.phase === 'homebound') ? pt : mr;
-            const code = data.daily.weathercode[i];
+            const code = (data.daily.weather_code ?? data.daily.weathercode)?.[i];
             map[i] = {
               weatherIcon: wmoEmoji(code),
               wmoCode:     code,
@@ -492,6 +492,21 @@
           setWx(map);
         }).catch(e => console.warn('Weather fetch failed, using static data', e));
       }, []);
+
+      // Single source of truth — computed once, used by both grid cards and weather strip
+      const resolvedDays = trip.days.map((day, i) => {
+        const live = wx?.[i];
+        return {
+          ...day,
+          wIcon:      live?.weatherIcon ?? day.weatherIcon,
+          wHigh:      live?.high        ?? day.high,
+          wLow:       live?.low         ?? day.low,
+          wRain:      live?.rain        ?? day.rain,
+          wCondition: live ? wmoCondition(live.wmoCode) : '—',
+          wCol:       weatherColors(live?.wmoCode ?? emojiCode(day.weatherIcon)),
+          isLive:     !!live,
+        };
+      });
 
       return (
         <div style={{
@@ -575,16 +590,10 @@
             gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
             gap: 16,
           }}>
-            {trip.days.map((day, i) => {
+            {resolvedDays.map((day, i) => {
               const c = phaseColors[day.phase];
               const isOpen = selected === i;
-              const wxDay      = wx?.[i];
-              const wIcon      = wxDay?.weatherIcon ?? day.weatherIcon;
-              const wHigh      = wxDay?.high        ?? day.high;
-              const wLow       = wxDay?.low         ?? day.low;
-              const wRain      = wxDay?.rain        ?? day.rain;
-              const wCondition = wxDay ? wmoCondition(wxDay.wmoCode) : "—";
-              const wCol       = weatherColors(wxDay?.wmoCode ?? emojiCode(day.weatherIcon));
+              const { wIcon, wHigh, wLow, wRain, wCondition, wCol, isLive } = day;
               return (
                 <div key={i} onClick={() => setSelected(isOpen ? null : i)} style={{
                   background: `linear-gradient(145deg, ${c.bg} 0%, #ffffff 100%)`,
@@ -621,7 +630,7 @@
                         <span style={{ color: wCol.lo, fontWeight: 400 }}> / {wLow}°</span>
                       </div>
                       <div style={{ fontSize: 9, color: wCol.lo, fontFamily: "sans-serif" }}>{wCondition}</div>
-                      {wx && <div style={{ fontSize: 8, color: "#16a34a", fontFamily: "sans-serif", marginTop: 1, letterSpacing: 0.3 }}>● live</div>}
+                      {isLive && <div style={{ fontSize: 8, color: "#16a34a", fontFamily: "sans-serif", marginTop: 1, letterSpacing: 0.3 }}>● live</div>}
                     </div>
                   </div>
 
@@ -676,21 +685,15 @@
                 ☁ 10-Day Weather Overview — Perth & Margaret River
               </div>
               <div style={{ display: "flex", gap: 0, overflowX: "auto" }}>
-                {trip.days.map((d, i) => {
-                  const c    = phaseColors[d.phase];
-                  const wxD  = wx?.[i];
-                  const icon = wxD?.weatherIcon ?? d.weatherIcon;
-                  const hi   = wxD?.high        ?? d.high;
-                  const lo   = wxD?.low         ?? d.low;
-                  const rain = wxD?.rain        ?? d.rain;
-                  const wc   = weatherColors(wxD?.wmoCode ?? emojiCode(d.weatherIcon));
+                {resolvedDays.map((d, i) => {
+                  const c = phaseColors[d.phase];
                   return (
-                    <div key={i} style={{ flex: "1 0 80px", textAlign: "center", padding: "12px 6px", borderRight: i < trip.days.length - 1 ? "1px solid #e8ecf2" : "none", background: wc.bg, transition: "background 0.3s" }}>
+                    <div key={i} style={{ flex: "1 0 80px", textAlign: "center", padding: "12px 6px", borderRight: i < resolvedDays.length - 1 ? "1px solid #e8ecf2" : "none", background: d.wCol.bg, transition: "background 0.3s" }}>
                       <div style={{ fontSize: 10, color: "#6a7a8a", fontFamily: "sans-serif", marginBottom: 4, fontWeight: 600 }}>{d.date.split(",")[0]}</div>
-                      <div style={{ fontSize: 22, marginBottom: 4 }}>{icon}</div>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: wc.hi, fontFamily: "sans-serif" }}>{hi}°</div>
-                      <div style={{ fontSize: 11, color: wc.lo, fontFamily: "sans-serif" }}>{lo}°</div>
-                      <div style={{ width: 6, height: 6, borderRadius: "50%", margin: "6px auto 0", background: rain === "Low" ? "#16a34a" : rain === "Medium" ? "#d97706" : "#dc2626" }} />
+                      <div style={{ fontSize: 22, marginBottom: 4 }}>{d.wIcon}</div>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: d.wCol.hi, fontFamily: "sans-serif" }}>{d.wHigh}°</div>
+                      <div style={{ fontSize: 11, color: d.wCol.lo, fontFamily: "sans-serif" }}>{d.wLow}°</div>
+                      <div style={{ width: 6, height: 6, borderRadius: "50%", margin: "6px auto 0", background: d.wRain === "Low" ? "#16a34a" : d.wRain === "Medium" ? "#d97706" : "#dc2626" }} />
                     </div>
                   );
                 })}
