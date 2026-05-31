@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Family Trip Packing Checklist</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 <style>
   :root {
     --sand: #f5efe6;
@@ -497,6 +498,25 @@
   .item:hover .item-edit { opacity: 1; }
   .item-delete:hover { color: var(--terracotta); }
   .item-edit:hover   { color: var(--sky); }
+
+  /* ── Drag handle ── */
+  .drag-handle {
+    cursor: grab;
+    color: var(--muted);
+    font-size: 15px;
+    line-height: 1;
+    opacity: 0;
+    transition: opacity 0.15s;
+    user-select: none;
+    flex-shrink: 0;
+    align-self: center;
+    padding-right: 2px;
+  }
+  .drag-handle:active { cursor: grabbing; }
+  .item:hover .drag-handle { opacity: 0.55; }
+  @media (hover: none) { .drag-handle { opacity: 0.35; } } /* always visible on touch */
+  .sortable-ghost   { opacity: 0.35; background: var(--light-green) !important; }
+  .sortable-chosen  { background: #fafaf8; }
 
   @media (hover: none) {
     .item-delete, .item-edit { opacity: 0.35; }
@@ -1479,6 +1499,7 @@
   let baseItemSnapshots = [];   // [{key, sectionId, html}]
   let baseSectionMeta  = {};    // id → {title, iconOuterHTML}
   let customSectionIds = [];
+  const sortableInited = new Set();
 
   // ── Helpers ───────────────────────────────────────────────────────────────
 
@@ -1609,6 +1630,7 @@
     const sec  = createSectionEl(id, name, icon);
     document.getElementById('add-section-area').before(sec);
     customSectionIds.push(id);
+    makeSortable(document.getElementById('list-' + id));
     hideAddSectionForm();
     scheduleSave();
   }
@@ -1626,6 +1648,7 @@
       wireItemName(el);
       wireItemNote(el);
       wireTags(el);
+      el.prepend(makeDragHandle());
       el.appendChild(makeEditBtn(el));
       el.appendChild(makeDeleteBtn(el));
     });
@@ -1634,6 +1657,7 @@
       const list = document.getElementById('list-' + s);
       if (!list) return;
       list.appendChild(makeAddItemRow(s));
+      makeSortable(list);
     });
   }
 
@@ -1659,6 +1683,27 @@
     btn.textContent = '✎';
     btn.onclick = e => { e.stopPropagation(); startEditName(itemEl); };
     return btn;
+  }
+
+  function makeDragHandle() {
+    const h = document.createElement('div');
+    h.className = 'drag-handle';
+    h.title     = 'Drag to reorder';
+    h.innerHTML = '⠿';
+    return h;
+  }
+
+  function makeSortable(listEl) {
+    if (!listEl || sortableInited.has(listEl.id)) return;
+    sortableInited.add(listEl.id);
+    Sortable.create(listEl, {
+      animation:   150,
+      handle:      '.drag-handle',
+      draggable:   '.item',
+      ghostClass:  'sortable-ghost',
+      chosenClass: 'sortable-chosen',
+      onEnd: () => scheduleSave(),
+    });
   }
 
   // ── Name editing ──────────────────────────────────────────────────────────
@@ -1830,6 +1875,7 @@
     el.innerHTML =
       `<div class="checkbox"><span class="checkmark">✓</span></div>` +
       `<div class="item-text"><div class="item-name">${escHtml(name)}</div></div>`;
+    el.prepend(makeDragHandle());
     wireItemName(el); wireItemNote(el); wireTags(el);
     el.appendChild(makeEditBtn(el));
     el.appendChild(makeDeleteBtn(el));
@@ -1929,7 +1975,15 @@
       });
     });
 
-    return { checked, removed, custom, names, notes, tags, removedSections, customSections };
+    // Order: record DOM order of items in each section
+    const order = {};
+    document.querySelectorAll('#tab-all .items-list').forEach(list => {
+      const id   = list.id.replace('list-', '');
+      const keys = Array.from(list.querySelectorAll('.item')).map(el => el.dataset.key).filter(Boolean);
+      if (keys.length) order[id] = keys;
+    });
+
+    return { checked, removed, custom, names, notes, tags, removedSections, customSections, order };
   }
 
   function applyState(state) {
@@ -1951,7 +2005,10 @@
     SECTIONS.forEach(id => {
       if (!document.getElementById('sec-' + id) && !removedSections.includes(id)) {
         const shell = createBaseSectionShell(id);
-        if (shell) document.getElementById('add-section-area').before(shell);
+        if (shell) {
+          document.getElementById('add-section-area').before(shell);
+          makeSortable(document.getElementById('list-' + id));
+        }
       }
     });
 
@@ -1961,6 +2018,7 @@
       const sec = createSectionEl(id, title, icon);
       document.getElementById('add-section-area').before(sec);
       if (!customSectionIds.includes(id)) customSectionIds.push(id);
+      makeSortable(document.getElementById('list-' + id));
     });
 
     // Items: remove
@@ -1976,6 +2034,7 @@
       const el = tmp.firstElementChild;
       el.onclick = () => toggleItem(el);
       wireItemName(el); wireItemNote(el); wireTags(el);
+      el.prepend(makeDragHandle());
       el.appendChild(makeEditBtn(el)); el.appendChild(makeDeleteBtn(el));
       list.insertBefore(el, document.getElementById('add-row-' + sectionId));
     });
@@ -2033,6 +2092,18 @@
           });
         }
       }
+    });
+
+    // Apply saved item order within each section
+    const order = state.order || {};
+    Object.entries(order).forEach(([sectionId, keys]) => {
+      const list   = document.getElementById('list-' + sectionId);
+      if (!list) return;
+      const addRow = document.getElementById('add-row-' + sectionId);
+      keys.forEach(key => {
+        const el = list.querySelector(`.item[data-key="${key}"]`);
+        if (el) list.insertBefore(el, addRow || null);
+      });
     });
 
     updateProgress();
