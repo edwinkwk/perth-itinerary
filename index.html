@@ -337,21 +337,85 @@
     // ── MFA Travel Advisory ───────────────────────────────────────────────────
     const MFA_LINK = 'https://www.mfa.gov.sg/Countries-Regions/A/Australia/Travel-Page';
 
-    function TravelAdvisory() {
-      const [advisory, setAdvisory]   = useState(null);
-      const [loading, setLoading]     = useState(true);
+    const GH_WORKFLOW_URL = 'https://api.github.com/repos/edwinkwk/perth-itinerary/actions/workflows/check-advisory.yml/dispatches';
 
-      useEffect(() => {
-        // Fetch same-origin advisory-data.json — no CORS issues, always reliable
+    function TravelAdvisory() {
+      const [advisory, setAdvisory]     = useState(null);
+      const [loading, setLoading]       = useState(true);
+      const [triggering, setTriggering] = useState(false);
+      const [countdown, setCountdown]   = useState(0);
+      const [triggerMsg, setTriggerMsg] = useState(null);
+
+      const loadAdvisory = () =>
         fetch('./advisory-data.json?v=' + Date.now())
           .then(r => r.json())
           .then(data => { setAdvisory(data); setLoading(false); })
           .catch(() => {
-            // Fallback if file missing
             setAdvisory({ label:"Generally Safe", detail:"While Australia is generally safe, exercise precautions on personal safety and belongings at all times.", bg:"#f0fdf4", text:"#166534", border:"#86efac", dot:"#22c55e", updated:"2026-06-01", stale:true });
             setLoading(false);
           });
-      }, []);
+
+      useEffect(() => { loadAdvisory(); }, []);
+
+      const triggerWorkflow = async () => {
+        // Get token from localStorage or prompt once
+        let token = localStorage.getItem('gh_pat');
+        if (!token) {
+          token = window.prompt(
+            'Paste a GitHub Fine-Grained PAT with "Actions: write" on edwinkwk/perth-itinerary\n\n' +
+            'Create one at: github.com/settings/tokens?type=beta\n' +
+            '(Saved to localStorage — not sent anywhere except GitHub API)'
+          );
+          if (!token) return;
+          localStorage.setItem('gh_pat', token.trim());
+          token = token.trim();
+        }
+
+        setTriggering(true); setTriggerMsg(null);
+
+        try {
+          const r = await fetch(GH_WORKFLOW_URL, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Accept': 'application/vnd.github+json',
+              'X-GitHub-Api-Version': '2022-11-28',
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ ref: 'main' }),
+          });
+
+          if (r.status === 401 || r.status === 403) {
+            localStorage.removeItem('gh_pat');
+            setTriggerMsg('❌ Auth failed — token cleared, try again');
+            setTriggering(false); return;
+          }
+          if (!r.ok) {
+            setTriggerMsg(`❌ GitHub API error ${r.status}`);
+            setTriggering(false); return;
+          }
+
+          // 204 — workflow dispatched. Count down then reload advisory.
+          let secs = 50;
+          setCountdown(secs);
+          const tick = setInterval(() => {
+            secs--;
+            setCountdown(secs);
+            if (secs <= 0) {
+              clearInterval(tick);
+              loadAdvisory().then(() => {
+                setTriggering(false); setCountdown(0);
+                setTriggerMsg('✓ Advisory refreshed');
+                setTimeout(() => setTriggerMsg(null), 5000);
+              });
+            }
+          }, 1000);
+
+        } catch {
+          setTriggerMsg('❌ Network error');
+          setTriggering(false);
+        }
+      };
 
       const adv = advisory || { bg:"#f4f6fa", text:"#334155", border:"#dde4ec", dot:"#94a3b8" };
       return (
@@ -382,11 +446,33 @@
                 )}
               </div>
             </div>
-            <a href={MFA_LINK} target="_blank" rel="noopener" style={{
-              fontSize:10, color:"#1d4ed8", background:"#dbeafe", border:"1px solid #93c5fd",
-              borderRadius:6, padding:"6px 14px", textDecoration:"none", fontFamily:"sans-serif",
-              fontWeight:600, flexShrink:0,
-            }}>View on MFA ↗</a>
+            <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-end", gap:6, flexShrink:0 }}>
+              <div style={{ display:"flex", gap:8 }}>
+                <button onClick={triggerWorkflow} disabled={triggering} style={{
+                  fontSize:10, fontFamily:"sans-serif", fontWeight:700, cursor: triggering ? "default" : "pointer",
+                  background: triggering ? "#e2e8f0" : "#f0fdf4", color: triggering ? "#64748b" : "#166534",
+                  border: `1px solid ${triggering ? "#cbd5e1" : "#86efac"}`,
+                  borderRadius:6, padding:"5px 12px", minWidth:100,
+                  opacity: triggering ? 0.9 : 1,
+                }}>
+                  {triggering ? `🔄 ${countdown}s…` : '↻ Check now'}
+                </button>
+                <a href={MFA_LINK} target="_blank" rel="noopener" style={{
+                  fontSize:10, color:"#1d4ed8", background:"#dbeafe", border:"1px solid #93c5fd",
+                  borderRadius:6, padding:"5px 12px", textDecoration:"none", fontFamily:"sans-serif", fontWeight:600,
+                }}>MFA site ↗</a>
+              </div>
+              {triggerMsg && (
+                <div style={{ fontSize:10, fontFamily:"sans-serif", color: triggerMsg.startsWith('✓') ? "#166534" : "#dc2626" }}>
+                  {triggerMsg}
+                </div>
+              )}
+              {triggering && (
+                <div style={{ fontSize:9, color:"#9aaabb", fontFamily:"sans-serif" }}>
+                  Running GitHub Actions workflow…
+                </div>
+              )}
+            </div>
           </div>
         </div>
       );
