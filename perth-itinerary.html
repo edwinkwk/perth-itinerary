@@ -51,6 +51,31 @@
       if (mm < 10) return "Medium";
       return "High";
     }
+    // Returns badge gradient + text colours keyed to WMO weather code
+    function weatherColors(code) {
+      if (code === 0)  return { bg: "linear-gradient(145deg,#fef9c3,#fde68a)", hi: "#92400e", lo: "#b45309", border: "#fcd34d" }; // Clear
+      if (code <= 2)   return { bg: "linear-gradient(145deg,#e0f2fe,#fef9c3)", hi: "#0369a1", lo: "#0284c7", border: "#7dd3fc" }; // Mostly sunny
+      if (code === 3)  return { bg: "linear-gradient(145deg,#f1f5f9,#dde3ea)", hi: "#374151", lo: "#6b7280", border: "#cbd5e1" }; // Overcast
+      if (code <= 48)  return { bg: "linear-gradient(145deg,#f8fafc,#e8ecf2)", hi: "#475569", lo: "#6b7280", border: "#dde4ec" }; // Fog
+      if (code <= 55)  return { bg: "linear-gradient(145deg,#dbeafe,#ede9fe)", hi: "#1d4ed8", lo: "#4338ca", border: "#93c5fd" }; // Drizzle
+      if (code <= 65)  return { bg: "linear-gradient(145deg,#bfdbfe,#93c5fd)", hi: "#1e3a8a", lo: "#1d4ed8", border: "#60a5fa" }; // Rain
+      if (code <= 77)  return { bg: "linear-gradient(145deg,#e0f2fe,#f0f9ff)", hi: "#0369a1", lo: "#38bdf8", border: "#bae6fd" }; // Snow/sleet
+      if (code <= 82)  return { bg: "linear-gradient(145deg,#bfdbfe,#dbeafe)", hi: "#1e3a8a", lo: "#1d4ed8", border: "#60a5fa" }; // Showers
+      return          { bg: "linear-gradient(145deg,#ddd6fe,#fce7f3)",         hi: "#4c1d95", lo: "#6d28d9", border: "#c4b5fd" }; // Thunderstorm
+    }
+    // Approximate WMO code from static emoji (fallback before API loads)
+    function emojiCode(icon) {
+      if (icon === "☀")  return 0;
+      if (icon === "🌤") return 1;
+      if (icon === "⛅") return 2;
+      if (icon === "☁")  return 3;
+      if (icon === "🌫") return 45;
+      if (icon === "🌦") return 53;
+      if (icon === "🌧") return 63;
+      if (icon === "❄")  return 73;
+      if (icon === "⛈")  return 95;
+      return 2;
+    }
 
     const trip = {
       title: "Perth & Margaret River",
@@ -300,6 +325,7 @@
               const wLow       = wxDay?.low         ?? day.low;
               const wRain      = wxDay?.rain        ?? day.rain;
               const wCondition = wxDay ? wmoCondition(wxDay.wmoCode) : "—";
+              const wCol       = weatherColors(wxDay?.wmoCode ?? emojiCode(day.weatherIcon));
               return (
                 <div key={i} onClick={() => setSelected(isOpen ? null : i)} style={{
                   background: `linear-gradient(145deg, ${c.bg} 0%, #ffffff 100%)`,
@@ -329,10 +355,13 @@
                       <div style={{ fontSize: 11, color: "#7a8898", fontFamily: "sans-serif", marginTop: 3 }}>{day.location}</div>
                     </div>
                     {/* Weather badge */}
-                    <div style={{ background: "#ffffff", border: `1px solid ${c.badge}`, borderRadius: 12, padding: "6px 10px", textAlign: "center", minWidth: 72, boxShadow: "0 1px 4px rgba(0,0,0,0.07)" }}>
+                    <div style={{ background: wCol.bg, border: `1px solid ${wCol.border}`, borderRadius: 12, padding: "6px 10px", textAlign: "center", minWidth: 72, boxShadow: "0 1px 4px rgba(0,0,0,0.1)" }}>
                       <div style={{ fontSize: 20, lineHeight: 1 }}>{wIcon}</div>
-                      <div style={{ fontSize: 11, color: c.accent, fontFamily: "sans-serif", marginTop: 3, fontWeight: 700 }}>{wHigh}° / {wLow}°</div>
-                      <div style={{ fontSize: 9, color: "#8a9aaa", fontFamily: "sans-serif" }}>{wCondition}</div>
+                      <div style={{ fontSize: 11, fontFamily: "sans-serif", marginTop: 3, fontWeight: 700 }}>
+                        <span style={{ color: wCol.hi }}>{wHigh}°</span>
+                        <span style={{ color: wCol.lo, fontWeight: 400 }}> / {wLow}°</span>
+                      </div>
+                      <div style={{ fontSize: 9, color: wCol.lo, fontFamily: "sans-serif" }}>{wCondition}</div>
                       {wx && <div style={{ fontSize: 8, color: "#16a34a", fontFamily: "sans-serif", marginTop: 1, letterSpacing: 0.3 }}>● live</div>}
                     </div>
                   </div>
@@ -395,12 +424,13 @@
                   const hi   = wxD?.high        ?? d.high;
                   const lo   = wxD?.low         ?? d.low;
                   const rain = wxD?.rain        ?? d.rain;
+                  const wc   = weatherColors(wxD?.wmoCode ?? emojiCode(d.weatherIcon));
                   return (
-                    <div key={i} style={{ flex: "1 0 80px", textAlign: "center", padding: "12px 6px", borderRight: i < trip.days.length - 1 ? "1px solid #e8ecf2" : "none", background: i % 2 === 0 ? "transparent" : "#f8fafc" }}>
-                      <div style={{ fontSize: 10, color: "#8a9aaa", fontFamily: "sans-serif", marginBottom: 4 }}>{d.date.split(",")[0]}</div>
+                    <div key={i} style={{ flex: "1 0 80px", textAlign: "center", padding: "12px 6px", borderRight: i < trip.days.length - 1 ? "1px solid #e8ecf2" : "none", background: wc.bg, transition: "background 0.3s" }}>
+                      <div style={{ fontSize: 10, color: "#6a7a8a", fontFamily: "sans-serif", marginBottom: 4, fontWeight: 600 }}>{d.date.split(",")[0]}</div>
                       <div style={{ fontSize: 22, marginBottom: 4 }}>{icon}</div>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: c.accent, fontFamily: "sans-serif" }}>{hi}°</div>
-                      <div style={{ fontSize: 11, color: "#8a9aaa", fontFamily: "sans-serif" }}>{lo}°</div>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: wc.hi, fontFamily: "sans-serif" }}>{hi}°</div>
+                      <div style={{ fontSize: 11, color: wc.lo, fontFamily: "sans-serif" }}>{lo}°</div>
                       <div style={{ width: 6, height: 6, borderRadius: "50%", margin: "6px auto 0", background: rain === "Low" ? "#16a34a" : rain === "Medium" ? "#d97706" : "#dc2626" }} />
                     </div>
                   );
