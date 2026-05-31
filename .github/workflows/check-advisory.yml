@@ -1,0 +1,149 @@
+name: Check MFA Travel Advisory
+
+on:
+  schedule:
+    - cron: '0 1 * * *'   # Daily at 09:00 SGT (01:00 UTC)
+  workflow_dispatch:        # Allow manual trigger from GitHub Actions tab
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Fetch MFA Australia page
+        id: fetch
+        run: |
+          # curl runs server-side — no Cloudflare JS challenge
+          HTML=$(curl -s --max-time 20 \
+            -H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" \
+            -H "Accept-Language: en-SG,en;q=0.9" \
+            "https://www.mfa.gov.sg/Countries-Regions/A/Australia/Travel-Page")
+
+          # Parse advisory level from plain text
+          LABEL=$(python3 - <<'PYEOF'
+          import sys, re, subprocess
+          html = subprocess.check_output(
+            ['curl', '-s', '--max-time', '20',
+             '-H', 'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+             '-H', 'Accept-Language: en-SG,en;q=0.9',
+             'https://www.mfa.gov.sg/Countries-Regions/A/Australia/Travel-Page'],
+            text=True
+          )
+          # Strip tags and decode entities
+          text = re.sub(r'<script[\s\S]*?</script>', ' ', html, flags=re.I)
+          text = re.sub(r'<style[\s\S]*?</style>',   ' ', text,  flags=re.I)
+          text = re.sub(r'<[^>]+>', ' ', text)
+          text = text.replace('&nbsp;', ' ').replace('&amp;', '&')
+          text = re.sub(r'\s+', ' ', text).strip()
+
+          levels = [
+            (r'Do Not Travel',                     'Do Not Travel'),
+            (r'Defer All Travel',                   'Defer All Travel'),
+            (r'Defer Non-Essential Travel',          'Defer Non-Essential Travel'),
+            (r'Exercise Extreme Caution',            'Exercise Extreme Caution'),
+            (r'Exercise a High Degree of Caution',   'Exercise a High Degree of Caution'),
+            (r'Exercise Normal Precautions',         'Exercise Normal Precautions'),
+            (r'generally safe',                      'Generally Safe'),
+            (r'exercise precautions',                'Exercise Precautions'),
+            (r'remain vigilant',                     'Remain Vigilant'),
+          ]
+          for pattern, label in levels:
+            if re.search(pattern, text, re.IGNORECASE):
+              print(label)
+              break
+          else:
+            print('UNKNOWN')
+          PYEOF
+          )
+
+          echo "label=$LABEL" >> "$GITHUB_OUTPUT"
+          echo "Detected advisory level: $LABEL"
+
+      - name: Compare with current advisory-data.json
+        id: compare
+        run: |
+          CURRENT=$(jq -r '.label' advisory-data.json)
+          NEW="${{ steps.fetch.outputs.label }}"
+          echo "Current: $CURRENT  →  New: $NEW"
+          if [ "$NEW" != "UNKNOWN" ] && [ "$CURRENT" != "$NEW" ]; then
+            echo "changed=true"  >> "$GITHUB_OUTPUT"
+            echo "old=$CURRENT"  >> "$GITHUB_OUTPUT"
+            echo "new=$NEW"      >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Update advisory-data.json
+        if: steps.compare.outputs.changed == 'true'
+        run: |
+          TODAY=$(date -u +%Y-%m-%d)
+          NEW="${{ steps.fetch.outputs.label }}"
+
+          # Map label to colours
+          python3 - <<PYEOF
+          import json, sys
+
+          colours = {
+            'Do Not Travel':                    dict(bg='#fee2e2', text='#991b1b', border='#fca5a5', dot='#ef4444'),
+            'Defer All Travel':                 dict(bg='#ffedd5', text='#9a3412', border='#fdba74', dot='#f97316'),
+            'Defer Non-Essential Travel':       dict(bg='#fef3c7', text='#92400e', border='#fcd34d', dot='#f59e0b'),
+            'Exercise Extreme Caution':         dict(bg='#fefce8', text='#713f12', border='#fde047', dot='#eab308'),
+            'Exercise a High Degree of Caution':dict(bg='#fefce8', text='#713f12', border='#fde047', dot='#eab308'),
+            'Exercise Normal Precautions':      dict(bg='#f0fdf4', text='#166534', border='#86efac', dot='#22c55e'),
+            'Generally Safe':                   dict(bg='#f0fdf4', text='#166534', border='#86efac', dot='#22c55e'),
+            'Exercise Precautions':             dict(bg='#f0fdf4', text='#166534', border='#86efac', dot='#22c55e'),
+            'Remain Vigilant':                  dict(bg='#fefce8', text='#713f12', border='#fde047', dot='#eab308'),
+          }
+
+          with open('advisory-data.json') as f:
+            data = json.load(f)
+
+          new_label = '$NEW'
+          data['label']   = new_label
+          data['updated'] = '$TODAY'
+          data.update(colours.get(new_label, colours['Generally Safe']))
+
+          with open('advisory-data.json', 'w') as f:
+            json.dump(data, f, indent=2)
+          PYEOF
+
+      - name: Commit updated advisory
+        if: steps.compare.outputs.changed == 'true'
+        run: |
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name  "github-actions[bot]"
+          git add advisory-data.json
+          git commit -m "⚠️ MFA advisory changed: ${{ steps.compare.outputs.old }} → ${{ steps.compare.outputs.new }}"
+          git push
+
+      - name: Open GitHub Issue as alert
+        if: steps.compare.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh issue create \
+            --title "⚠️ MFA advisory changed: ${{ steps.compare.outputs.old }} → ${{ steps.compare.outputs.new }}" \
+            --body "$(cat <<'EOF'
+          ## MFA Australia Travel Advisory Update
+
+          The Singapore MFA travel advisory for Australia has changed.
+
+          | | Level |
+          |---|---|
+          | **Before** | ${{ steps.compare.outputs.old }} |
+          | **After** | ${{ steps.compare.outputs.new }} |
+
+          **`advisory-data.json` has been automatically updated** and the itinerary at https://edwinkwk.github.io/perth-itinerary/ now reflects the new level.
+
+          Please review the full advisory at:
+          https://www.mfa.gov.sg/Countries-Regions/A/Australia/Travel-Page
+
+          > _This issue was opened automatically by the Check MFA Travel Advisory workflow._
+          EOF
+          )"
