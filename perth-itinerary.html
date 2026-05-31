@@ -338,15 +338,20 @@
     const MFA_URL  = 'https://www.mfa.gov.sg/Countries-Regions/A/Australia/Travel-Page';
     const MFA_LINK = 'https://www.mfa.gov.sg/Countries-Regions/A/Australia/Travel-Page';
     const ADV_LEVELS = [
+      // Formal tiered language (if MFA ever uses it)
       { re:/Do Not Travel/i,                    label:"Do Not Travel",                    bg:"#fee2e2", text:"#991b1b", border:"#fca5a5", dot:"#ef4444" },
       { re:/Defer All Travel/i,                 label:"Defer All Travel",                 bg:"#ffedd5", text:"#9a3412", border:"#fdba74", dot:"#f97316" },
       { re:/Defer Non-Essential Travel/i,       label:"Defer Non-Essential Travel",       bg:"#fef3c7", text:"#92400e", border:"#fcd34d", dot:"#f59e0b" },
       { re:/Exercise Extreme Caution/i,         label:"Exercise Extreme Caution",         bg:"#fefce8", text:"#713f12", border:"#fde047", dot:"#eab308" },
       { re:/Exercise a High Degree of Caution/i,label:"Exercise a High Degree of Caution",bg:"#fefce8", text:"#713f12", border:"#fde047", dot:"#eab308" },
       { re:/Exercise Normal Precautions/i,      label:"Exercise Normal Precautions",      bg:"#f0fdf4", text:"#166534", border:"#86efac", dot:"#22c55e" },
+      // MFA's actual prose-style language for stable destinations
+      { re:/generally safe/i,                   label:"Generally Safe",                   bg:"#f0fdf4", text:"#166534", border:"#86efac", dot:"#22c55e" },
+      { re:/exercise precautions/i,             label:"Exercise Precautions",             bg:"#f0fdf4", text:"#166534", border:"#86efac", dot:"#22c55e" },
+      { re:/remain vigilant/i,                  label:"Remain Vigilant — Normal Conditions", bg:"#f0fdf4", text:"#166534", border:"#86efac", dot:"#22c55e" },
     ];
     // Default shown when all proxies fail (Australia = stable, Level 1 as of 2026)
-    const ADV_DEFAULT = { label:"Exercise Normal Precautions*", bg:"#f0fdf4", text:"#166534", border:"#86efac", dot:"#22c55e", stale: true };
+    const ADV_DEFAULT = { label:"Generally Safe", bg:"#f0fdf4", text:"#166534", border:"#86efac", dot:"#22c55e", stale: true };
     // Try each proxy in order, return first successful HTML string
     async function fetchViaProxy(url) {
       const proxies = [
@@ -381,14 +386,19 @@
         const html = await fetchViaProxy(MFA_URL);
         const now  = new Date().toLocaleString('en-SG',{ hour:'2-digit', minute:'2-digit', day:'numeric', month:'short' });
         let found  = null;
+        let snippet = null;
         if (html) {
           for (const p of ADV_LEVELS) { if (p.re.test(html)) { found = p; break; } }
-          // If page loaded but no pattern matched, page structure may have changed
           if (!found) found = { label:"See MFA website", bg:"#f0f4f8", text:"#334155", border:"#cbd5e1", dot:"#94a3b8" };
+          // Extract first meaningful advisory sentence
+          const m = html.match(/While Australia[^<.]{10,220}[.]/i)
+                 || html.match(/Australia is generally[^<.]{10,220}[.]/i)
+                 || html.match(/exercise (?:precautions|caution)[^<.]{10,200}[.]/i);
+          if (m) snippet = m[0].replace(/\s+/g,' ').trim().slice(0, 200);
         } else {
-          found = ADV_DEFAULT;   // all proxies failed — show cached default
+          found = ADV_DEFAULT;
         }
-        const data = { ...found, checkedAt: now, ts: Date.now() };
+        const data = { ...found, snippet, checkedAt: now, ts: Date.now() };
         sessionStorage.setItem('mfa_adv', JSON.stringify(data));
         setAdvisory(data); setCheckedAt(now);
         setLoading(false);
@@ -413,7 +423,12 @@
                       <div style={{ width:9, height:9, borderRadius:"50%", background:adv.dot, flexShrink:0 }} />
                       <span style={{ fontSize:15, fontWeight:700, color:adv.text, fontFamily:"sans-serif" }}>{advisory.label}</span>
                     </div>
-                    {advisory.stale && <div style={{ fontSize:10, color:"#b45309", fontFamily:"sans-serif", marginTop:3 }}>* Last known level — verify on MFA site</div>}
+                    {advisory.snippet && (
+                      <div style={{ fontSize:11, color:adv.text, fontFamily:"sans-serif", marginTop:5, opacity:0.8, maxWidth:520, lineHeight:1.5 }}>
+                        "{advisory.snippet}"
+                      </div>
+                    )}
+                    {advisory.stale && <div style={{ fontSize:10, color:"#b45309", fontFamily:"sans-serif", marginTop:3 }}>* Could not reach MFA — last known level shown. Verify on MFA site.</div>}
                   </div>
                 )}
               </div>
