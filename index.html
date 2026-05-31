@@ -388,13 +388,23 @@
         let found  = null;
         let snippet = null;
         if (html) {
-          for (const p of ADV_LEVELS) { if (p.re.test(html)) { found = p; break; } }
+          // Normalise HTML: strip scripts/styles, remove tags, decode entities, collapse whitespace
+          const text = html
+            .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+            .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+            .replace(/<[^>]+>/g, ' ')
+            .replace(/&nbsp;/gi, ' ').replace(/&amp;/gi, '&')
+            .replace(/&lt;/gi, '<').replace(/&gt;/gi, '>')
+            .replace(/&quot;/gi, '"').replace(/&#\d+;/g, ' ')
+            .replace(/\s+/g, ' ').trim();
+          for (const p of ADV_LEVELS) { if (p.re.test(text)) { found = p; break; } }
           if (!found) found = { label:"See MFA website", bg:"#f0f4f8", text:"#334155", border:"#cbd5e1", dot:"#94a3b8" };
-          // Extract first meaningful advisory sentence
-          const m = html.match(/While Australia[^<.]{10,220}[.]/i)
-                 || html.match(/Australia is generally[^<.]{10,220}[.]/i)
-                 || html.match(/exercise (?:precautions|caution)[^<.]{10,200}[.]/i);
-          if (m) snippet = m[0].replace(/\s+/g,' ').trim().slice(0, 200);
+          // Extract first meaningful advisory sentence from plain text
+          const m = text.match(/While Australia[^.]{10,220}\./i)
+                 || text.match(/Australia is generally[^.]{10,220}\./i)
+                 || text.match(/exercise (?:precautions|caution)[^.]{10,200}\./i)
+                 || text.match(/remain vigilant[^.]{5,200}\./i);
+          if (m) snippet = m[0].replace(/\s+/g,' ').trim().slice(0, 220);
         } else {
           found = ADV_DEFAULT;
         }
