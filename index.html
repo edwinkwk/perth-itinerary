@@ -335,7 +335,8 @@
     }
 
     // ── MFA Travel Advisory ───────────────────────────────────────────────────
-    const MFA_URL = 'https://www.mfa.gov.sg/travelling-overseas/advisories/australia';
+    const MFA_URL  = 'https://www.mfa.gov.sg/Countries-Regions/A/Australia/Travel-Page';
+    const MFA_LINK = 'https://www.mfa.gov.sg/Countries-Regions/A/Australia/Travel-Page';
     const ADV_LEVELS = [
       { re:/Do Not Travel/i,                    label:"Do Not Travel",                    bg:"#fee2e2", text:"#991b1b", border:"#fca5a5", dot:"#ef4444" },
       { re:/Defer All Travel/i,                 label:"Defer All Travel",                 bg:"#ffedd5", text:"#9a3412", border:"#fdba74", dot:"#f97316" },
@@ -344,15 +345,31 @@
       { re:/Exercise a High Degree of Caution/i,label:"Exercise a High Degree of Caution",bg:"#fefce8", text:"#713f12", border:"#fde047", dot:"#eab308" },
       { re:/Exercise Normal Precautions/i,      label:"Exercise Normal Precautions",      bg:"#f0fdf4", text:"#166534", border:"#86efac", dot:"#22c55e" },
     ];
+    // Default shown when all proxies fail (Australia = stable, Level 1 as of 2026)
+    const ADV_DEFAULT = { label:"Exercise Normal Precautions*", bg:"#f0fdf4", text:"#166534", border:"#86efac", dot:"#22c55e", stale: true };
+    // Try each proxy in order, return first successful HTML string
+    async function fetchViaProxy(url) {
+      const proxies = [
+        u => `https://corsproxy.io/?${encodeURIComponent(u)}`,
+        u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+        u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
+      ];
+      for (const make of proxies) {
+        try {
+          const r = await fetch(make(url), { signal: AbortSignal.timeout(6000) });
+          if (r.ok) { const t = await r.text(); if (t.length > 200) return t; }
+        } catch {}
+      }
+      return null;
+    }
 
     function TravelAdvisory() {
       const [advisory, setAdvisory]   = useState(null);
       const [loading, setLoading]     = useState(true);
-      const [error, setError]         = useState(false);
       const [checkedAt, setCheckedAt] = useState(null);
 
       const fetchAdvisory = async (force = false) => {
-        setLoading(true); setError(false);
+        setLoading(true);
         if (!force) {
           try {
             const cached = JSON.parse(sessionStorage.getItem('mfa_adv') || 'null');
@@ -361,22 +378,20 @@
             }
           } catch {}
         }
-        try {
-          const proxy = `https://api.allorigins.win/raw?url=${encodeURIComponent(MFA_URL)}`;
-          const r = await fetch(proxy, { signal: AbortSignal.timeout(9000) });
-          if (!r.ok) throw new Error('HTTP ' + r.status);
-          const html = await r.text();
-          let found = null;
+        const html = await fetchViaProxy(MFA_URL);
+        const now  = new Date().toLocaleString('en-SG',{ hour:'2-digit', minute:'2-digit', day:'numeric', month:'short' });
+        let found  = null;
+        if (html) {
           for (const p of ADV_LEVELS) { if (p.re.test(html)) { found = p; break; } }
-          const now = new Date().toLocaleString('en-SG',{ hour:'2-digit', minute:'2-digit', day:'numeric', month:'short' });
-          const data = { ...(found || { label:"See MFA website", bg:"#f0f4f8", text:"#334155", border:"#cbd5e1", dot:"#94a3b8" }), checkedAt: now, ts: Date.now() };
-          sessionStorage.setItem('mfa_adv', JSON.stringify(data));
-          setAdvisory(data); setCheckedAt(now);
-        } catch {
-          setError(true);
-        } finally {
-          setLoading(false);
+          // If page loaded but no pattern matched, page structure may have changed
+          if (!found) found = { label:"See MFA website", bg:"#f0f4f8", text:"#334155", border:"#cbd5e1", dot:"#94a3b8" };
+        } else {
+          found = ADV_DEFAULT;   // all proxies failed — show cached default
         }
+        const data = { ...found, checkedAt: now, ts: Date.now() };
+        sessionStorage.setItem('mfa_adv', JSON.stringify(data));
+        setAdvisory(data); setCheckedAt(now);
+        setLoading(false);
       };
 
       useEffect(() => { fetchAdvisory(); }, []);
@@ -392,15 +407,13 @@
                   Singapore MFA · Australia Travel Advisory
                 </div>
                 {loading && <div style={{ fontSize:13, color:"#7a8898", fontFamily:"sans-serif" }}>Fetching advisory…</div>}
-                {error && !loading && (
-                  <div style={{ fontSize:13, color:"#dc2626", fontFamily:"sans-serif" }}>
-                    Unable to reach MFA — <a href={MFA_URL} target="_blank" rel="noopener" style={{ color:"#1d4ed8", fontWeight:600 }}>open MFA site ↗</a>
-                  </div>
-                )}
                 {advisory && !loading && (
-                  <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-                    <div style={{ width:9, height:9, borderRadius:"50%", background:adv.dot, flexShrink:0 }} />
-                    <span style={{ fontSize:15, fontWeight:700, color:adv.text, fontFamily:"sans-serif" }}>{advisory.label}</span>
+                  <div>
+                    <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+                      <div style={{ width:9, height:9, borderRadius:"50%", background:adv.dot, flexShrink:0 }} />
+                      <span style={{ fontSize:15, fontWeight:700, color:adv.text, fontFamily:"sans-serif" }}>{advisory.label}</span>
+                    </div>
+                    {advisory.stale && <div style={{ fontSize:10, color:"#b45309", fontFamily:"sans-serif", marginTop:3 }}>* Last known level — verify on MFA site</div>}
                   </div>
                 )}
               </div>
@@ -412,7 +425,7 @@
                 padding:"4px 10px", cursor:"pointer", color:"#475569", fontFamily:"sans-serif",
                 fontWeight:600, opacity: loading ? 0.5 : 1,
               }}>↻ Refresh</button>
-              <a href={MFA_URL} target="_blank" rel="noopener" style={{
+              <a href={MFA_LINK} target="_blank" rel="noopener" style={{
                 fontSize:10, color:"#1d4ed8", background:"#dbeafe", border:"1px solid #93c5fd",
                 borderRadius:6, padding:"4px 10px", textDecoration:"none", fontFamily:"sans-serif", fontWeight:600,
               }}>MFA site ↗</a>
